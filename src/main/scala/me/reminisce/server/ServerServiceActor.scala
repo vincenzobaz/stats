@@ -23,7 +23,7 @@ class ServerServiceActor extends Actor with StatsServiceActor with ActorLogging 
     */
   override def postStop(): Unit = {
     connection.close()
-    driver.system.shutdown()
+    driver.system.terminate()
     driver.close()
   }
 
