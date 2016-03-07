@@ -8,20 +8,20 @@ import scala.io.Source
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import me.reminisce.server.GameEntities._
-//import org.json4s.jackson.JsonMethods._
+
 import org.json4s.JsonDSL.WithDouble._
-import org.json4s.jackson.Serialization
+
 import org.json4s.jackson.Serialization
 
 /**
   * Created by sandra on 07/03/16.
   */
 class GameEntitiesTests extends FunSuite{
-  implicit val formats = DefaultFormats + GameSerializer
+  implicit val formats = Serialization.formats(NoTypeHints) + new GameSerializer
   val content = Source.fromFile("/Users/sandra/Documents/EPFL/BachelorProject/boards.json").getLines.mkString("\n")
   val json = parse(content)
-
- // print(json.extract[Game])
+//print(json)
+ json.extract[Game]
 
   def extractQuestion(q:GameQuestion)  = q match {
     case TimelineQuestion( kind, tpe, subject, answer, min, max, default, unit, step, threshold) =>
@@ -59,17 +59,19 @@ class GameEntitiesTests extends FunSuite{
         ("answer" -> answer.toString())
         )
   }
-  object GameSerializer extends CustomSerializer[Game]( format => ({
+  class GameSerializer extends CustomSerializer[Game]( format => ({
     case JObject(
-    JField("gameId", JString(gameId)) ::
-      JField("player1Id", JString(player1Id)) ::
-      JField("player2Id", JString(player2Id)) :: _) =>
+    JField("_id", JString(gameId)) ::
+      JField("player1", JString(player1Id)) ::
+      JField("player2", JString(player2Id)) :: _) =>
       implicit val formats = DefaultFormats
       val player1Board = (json \ "player1Board") match {
         case JObject(JField("userId", JString(userId)) :: _) =>
+          //val tileJson = (json \ "player1Board" \ "tiles" \\ "`type`")
           val tiles = (json \ "player1Board" \ "tiles") match {
-            case JArray(t) => t map {
-              tile => (tile \ "`type`").extract[String] match {
+            case JArray(t) =>
+              t map {
+              tile => (json \ "player1Board" \ "tiles" \ "`type`") match {
                 case "MultipleChoice" => Tile(QuestionKind.MultipleChoice, (tile \ "tileId").extract[String],
                   (tile \ "question1").extract[MultipleChoiceQuestion],
                   (tile \ "question2").extract[MultipleChoiceQuestion],
@@ -180,14 +182,14 @@ class GameEntitiesTests extends FunSuite{
     val boardState =  ???
     val player1Board = (("userId" -> game.player1Board.userId),
       ("tiles" -> (game.player1Board.tiles map {
-        tile =>( ("`type`" -> tile.`type`),
+        tile =>( ("`type`" -> tile.`type`.toString),
           ("tileId" -> tile.tileId),
           ("question1" ->extractQuestion(tile.question1)),
           ("question2" ->extractQuestion(tile.question2)),
           ("question3" ->extractQuestion(tile.question3)),
-          ("score" -> tile.score),
-          ("answered" -> tile.answered),
-          ("disabled" -> tile.disabled))})
+          ("score" -> tile.score.toString),
+          ("answered" -> tile.answered.toString),
+          ("disabled" -> tile.disabled.toString))})
       ))
     val player2Board = (("userId" -> game.player2Board.userId),
       ("tiles" -> (game.player2Board.tiles map {
@@ -202,16 +204,19 @@ class GameEntitiesTests extends FunSuite{
       ))
 
     val status = ("status" -> game.status)
-    val playerTurn = ("playerTurn" -> game.playerTurn)
-    val player1Scores = ("player1Scores" -> game.player1Scores)
-    val player2Scores = ("player2Scores" -> game.player2Scores)
-    val wonBy = ("wonBy" -> game.wonBy)
-    val creationTime = ("creationTime" -> game.creationTime)
+    val playerTurn = ("playerTurn" -> game.playerTurn.toString)
+    val player1Scores = ("player1Scores" -> game.player1Scores.toString)
+    val player2Scores = ("player2Scores" -> game.player2Scores.toString)
+    val wonBy = ("wonBy" -> game.wonBy.toString)
+    val creationTime = ("creationTime" -> game.creationTime.toString)
     val gameId = ("gameId" -> game.gameId)
     val player1Id = ("player1Id" -> game.player1Id)
     val player2Id = ("player2Id" -> game.player2Id )
-
-    Serialization.write(player1Board)
+    throw new RuntimeException("No serializing")
+    //Serialization.write(player1Board)
   }))
 
+  /*class TileSerializer extends CustomSerializer[Tile]( format => ({
+    case
+  })*/
 }
