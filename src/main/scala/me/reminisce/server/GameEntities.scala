@@ -27,7 +27,7 @@ object GameEntities {
                   creationTime: Int //how big ???
                  )
 
-  case class Board(userId: String, tiles: List[Tile], _id: String) extends RestMessage
+  case class Board(userId: String, tiles: List[Tile], boardId: String) extends RestMessage
 
   case class Tile(`type`: QuestionKind,
                   tileId: String,
@@ -161,21 +161,21 @@ object GameEntities {
   case class SubjectWithId(subId: Int, text: String, subject: Subject)
 
 
-  case class Possibility(name: String, imageUrl: Option[String], `type`: String, fbId: Option[String] = None)
+  case class Possibility(text: String, imageUrl: Option[String] = None, fbId: Option[String] = None, pageId: Option[Int] = None )
 
-  case class GeolocationQuestion(userId: String,
-                                 kind: QuestionKind,
-                                 `type`: SpecificQuestionType,
-                                 subject: Option[Subject],
-                                 answer: Location,
+  case class GeolocationQuestion(subject: Option[Subject],
+                                 range: Double,
                                  defaultLocation: Location,
-                                 range: Double) extends GameQuestion( kind, `type`)
+                                 answer: Location,
+                                 `type`: SpecificQuestionType,
+                                 kind: QuestionKind
+                                 ) extends GameQuestion( kind, `type`)
 
   case class Location(latitude: Double, longitude: Double)
 
 
   //case class Board(userId: String, tiles: List[Tile], isTokenStale: Boolean, strategy: String) extends RestMessage
-  case class FBFrom(userId: String, userName: String)
+ // case class FBFrom(userId: String, userName: String)
 
 
 }
