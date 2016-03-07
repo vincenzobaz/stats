@@ -1,27 +1,18 @@
 package me.reminisce
 
 import me.reminisce.server.GameEntities
-import me.reminisce.server.GameEntities.QuestionKind.QuestionKind
 import org.scalatest.FunSuite
-
 import scala.io.Source
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import me.reminisce.server.GameEntities._
 
-import org.json4s.JsonDSL.WithDouble._
-
-import org.json4s.jackson.Serialization
-
-/**
-  * Created by sandra on 07/03/16.
-  */
 class GameEntitiesTests extends FunSuite{
-  implicit val formats = Serialization.formats(NoTypeHints) + new GameSerializer
+  implicit val formats = DefaultFormats//Serialization.formats(NoTypeHints) //+ new GameSerializer
   val content = Source.fromFile("/Users/sandra/Documents/EPFL/BachelorProject/boards.json").getLines.mkString("\n")
   val json = parse(content)
-//print(json)
- json.extract[Game]
+   print(json)
+ //json.extract[Game]
 
   def extractQuestion(q:GameQuestion)  = q match {
     case TimelineQuestion( kind, tpe, subject, answer, min, max, default, unit, step, threshold) =>
@@ -69,8 +60,7 @@ class GameEntitiesTests extends FunSuite{
         case JObject(JField("userId", JString(userId)) :: _) =>
           //val tileJson = (json \ "player1Board" \ "tiles" \\ "`type`")
           val tiles = (json \ "player1Board" \ "tiles") match {
-            case JArray(t) =>
-              t map {
+            case JArray(t) => t map {
               tile => (json \ "player1Board" \ "tiles" \ "`type`") match {
                 case "MultipleChoice" => Tile(QuestionKind.MultipleChoice, (tile \ "tileId").extract[String],
                   (tile \ "question1").extract[MultipleChoiceQuestion],
@@ -212,11 +202,34 @@ class GameEntitiesTests extends FunSuite{
     val gameId = ("gameId" -> game.gameId)
     val player1Id = ("player1Id" -> game.player1Id)
     val player2Id = ("player2Id" -> game.player2Id )
-    throw new RuntimeException("No serializing")
-    //Serialization.write(player1Board)
-  }))
+    throw new RuntimeException("No serializing") //TODO:
 
-  /*class TileSerializer extends CustomSerializer[Tile]( format => ({
-    case
-  })*/
+  }))
+  class TileSerializer extends CustomSerializer[Tile]( format => ({
+    case JObject(JField("_id",JString(tileId)) :: JField("`type`",JString(tpe))::
+      JField("question1",JObject(q1))::JField("question2",JObject(q2))::JField("question3",JObject(q3))::
+      JField("score", JInt(score))::JField("answered", JBool(answered))::JField("disabled", JBool(disabled))::_) => tpe match {
+      case "MultipleChoice" => Tile(QuestionKind.MultipleChoice, tileId,
+        q1.extract[MultipleChoiceQuestion],
+        q2.extract[MultipleChoiceQuestion],
+        q3.extract[MultipleChoiceQuestion],
+        score.toInt, answered, disabled)
+
+      case "Timeline" => Tile(QuestionKind.Timeline,tileId,
+        q1.extract[TimelineQuestion],
+        q2.extract[TimelineQuestion],
+        q3.extract[TimelineQuestion],
+        score.toInt, answered, disabled)
+      case "Geolocation" => Tile(QuestionKind.Geolocation, tileId,
+        q1.extract[GeolocationQuestion],
+        q2.extract[GeolocationQuestion],
+        q3.extract[GeolocationQuestion],
+        score.toInt, answered, disabled)
+      case "Order" => Tile(QuestionKind.Order, tileId,
+        q1.extract[OrderQuestion],
+        q2.extract[OrderQuestion],
+        q3.extract[OrderQuestion],
+        score.toInt, answered, disabled)
+    }
+  },{case _ => throw new RuntimeException("No serializing")}))
 }
