@@ -1,6 +1,9 @@
 package me.reminisce
 
-import me.reminisce.server.GameEntities
+import me.reminisce.server.GameEntities.TimeUnit
+import me.reminisce.server.GameEntities.SpecificQuestionType
+import me.reminisce.server.GameEntities.SpecificQuestionType.SpecificQuestionType
+import me.reminisce.server.GameEntities.TimeUnit.TimeUnit
 import org.scalatest.FunSuite
 import scala.io.Source
 import org.json4s._
@@ -14,7 +17,7 @@ class GameEntitiesTests extends FunSuite{
    print(json)
  //json.extract[Game]
 
-  def extractQuestion(q:GameQuestion)  = q match {
+  def transformQuestion(q:GameQuestion)  = q match {
     case TimelineQuestion( kind, tpe, subject, answer, min, max, default, unit, step, threshold) =>
       (("kind" -> kind.toString),
         ("`type`" -> tpe.toString),
@@ -50,6 +53,61 @@ class GameEntitiesTests extends FunSuite{
         ("answer" -> answer.toString())
         )
   }
+
+  def findTpe(tpe : String): SpecificQuestionType = tpe match {
+    case "TLWhenDidYouShareThisPost" => SpecificQuestionType.TLWhenDidYouShareThisPost
+    case "TLWhenDidYouLikeThisPage" =>  SpecificQuestionType.TLWhenDidYouLikeThisPage
+    case "GeoWhatCoordinatesWereYouAt" => SpecificQuestionType.GeoWhatCoordinatesWereYouAt
+    case "MCWhoMadeThisCommentOnYourPost" => SpecificQuestionType.MCWhoMadeThisCommentOnYourPost
+    case "MCWhichPageDidYouLike" => SpecificQuestionType.MCWhichPageDidYouLike
+    case "MCWhoLikedYourPost" => SpecificQuestionType.MCWhoLikedYourPost
+    case "ORDPageLikes" => SpecificQuestionType.ORDPageLikes
+    case "ORDPostCommentsNumber" => SpecificQuestionType.ORDPostCommentsNumber
+    case "ORDPostLikesNumber" => SpecificQuestionType.ORDPostLikesNumber
+    case "ORDPostTime" => SpecificQuestionType.ORDPostTime
+    case "ORDPageLikeTime" => SpecificQuestionType.ORDPostTime
+    case _ => ??? //error TODO:
+  }
+
+  def findUnit(tpe:String):TimeUnit = {
+    case "Day" => TimeUnit.Day
+    case "Week" => TimeUnit.Week
+    case "Month" => TimeUnit.Month
+    case "Year" => TimeUnit.Year
+    case _ => ??? //error TODO:
+  }
+
+  def extractSubject(tpe: String, s:List[(String,JValue)]) = ???
+
+  def extractChoices(choices:List[JValue]) = ???
+
+  def extractQuestion(tpe: String, q:List[(String,JValue)]): GameQuestion = tpe match {
+    case "MultipleChoice" => q match {
+      case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
+        JField("choices",JArray(choices))::JField("answer",JInt(answer))::_ =>
+        MultipleChoiceQuestion(QuestionKind.MultipleChoice,findTpe(tpe),extractSubject(tpe,s),extractChoices(choices),answer.toInt)
+    }
+    case "Timeline" => q match {
+      case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
+        JField("answer",JString(answer))::JField("min",JString(min)):: JField("max",JString(max))::JField("default",JString(default))::
+        JField("unit",JString(unit))::JField("step",JInt(step)):: JField("threshold",JInt(threshold))::_ =>
+          TimelineQuestion(QuestionKind.Timeline,findTpe(tpe),extractSubject(tpe,s),answer,min,max,default,findUnit(unit),step.toInt,threshold.toInt)
+
+    }
+    case "Geolocation" => q match {
+      case JField("subject",JObject(s)) :: JField("range",JDouble(range)) :: JField("defaultLocation",JObject(loc))::
+        JField("answer",JObject(answer))::JField("`type`",JString(tpe))::JField("kind",JString(kind))::_ =>
+            GeolocationQuestion(extractSubject(tpe,s),range,extractLocation(loc),extractLocation(answer),findTpe(tpe),QuestionKind.Geolocation)
+    }
+    case "Order" => q match {
+      case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
+        JField("choices",JArray(choices))::JField("answer",JArray(answer))::_ =>
+        OrderQuestion(QuestionKind.Order,findTpe(tpe),extractSubject(tpe,s),extractChoices(choices),extractAnswer(answer))
+    }
+    case _ => ???
+
+  }
+
   class GameSerializer extends CustomSerializer[Game]( format => ({
     case JObject(
     JField("_id", JString(gameId)) ::
@@ -154,7 +212,7 @@ class GameEntitiesTests extends FunSuite{
       val wonBy = (json \ "wonBy").extract[BigInt].toInt
       val creationTime = (json \ "creationTime").extract[BigInt].toInt
 
-      GameEntities.Game(gameId, player1Id, player2Id, player1Board, player2Board, status, playerTurn,
+      Game(gameId, player1Id, player2Id, player1Board, player2Board, status, playerTurn,
         player1Scores,player2Scores, boardState, player1AvailableMoves, player2AvailableMoves, wonBy, creationTime)
 
   }, {case game: Game =>
@@ -174,9 +232,9 @@ class GameEntitiesTests extends FunSuite{
       ("tiles" -> (game.player1Board.tiles map {
         tile =>( ("`type`" -> tile.`type`.toString),
           ("tileId" -> tile.tileId),
-          ("question1" ->extractQuestion(tile.question1)),
-          ("question2" ->extractQuestion(tile.question2)),
-          ("question3" ->extractQuestion(tile.question3)),
+          ("question1" ->transformQuestion(tile.question1)),
+          ("question2" ->transformQuestion(tile.question2)),
+          ("question3" ->transformQuestion(tile.question3)),
           ("score" -> tile.score.toString),
           ("answered" -> tile.answered.toString),
           ("disabled" -> tile.disabled.toString))})
@@ -185,9 +243,9 @@ class GameEntitiesTests extends FunSuite{
       ("tiles" -> (game.player2Board.tiles map {
         tile => (("`type`" -> tile.`type`.toString),
           ("tileId" -> tile.tileId.toString),
-          ("question1" ->extractQuestion(tile.question1)),
-          ("question2" ->extractQuestion(tile.question2)),
-          ("question3" ->extractQuestion(tile.question3)),
+          ("question1" ->transformQuestion(tile.question1)),
+          ("question2" ->transformQuestion(tile.question2)),
+          ("question3" ->transformQuestion(tile.question3)),
           ("score" -> tile.score.toString),
           ("answered" -> tile.answered.toString),
           ("disabled" -> tile.disabled.toString))})
@@ -208,28 +266,13 @@ class GameEntitiesTests extends FunSuite{
   class TileSerializer extends CustomSerializer[Tile]( format => ({
     case JObject(JField("_id",JString(tileId)) :: JField("`type`",JString(tpe))::
       JField("question1",JObject(q1))::JField("question2",JObject(q2))::JField("question3",JObject(q3))::
-      JField("score", JInt(score))::JField("answered", JBool(answered))::JField("disabled", JBool(disabled))::_) => tpe match {
-      case "MultipleChoice" => Tile(QuestionKind.MultipleChoice, tileId,
-        q1.extract[MultipleChoiceQuestion],
-        q2.extract[MultipleChoiceQuestion],
-        q3.extract[MultipleChoiceQuestion],
+      JField("score", JInt(score))::JField("answered", JBool(answered))::JField("disabled", JBool(disabled))::_) =>
+      Tile(QuestionKind.MultipleChoice, tileId,
+        extractQuestion(tpe,q1),
+        extractQuestion(tpe,q2),
+        extractQuestion(tpe,q3),
         score.toInt, answered, disabled)
-
-      case "Timeline" => Tile(QuestionKind.Timeline,tileId,
-        q1.extract[TimelineQuestion],
-        q2.extract[TimelineQuestion],
-        q3.extract[TimelineQuestion],
-        score.toInt, answered, disabled)
-      case "Geolocation" => Tile(QuestionKind.Geolocation, tileId,
-        q1.extract[GeolocationQuestion],
-        q2.extract[GeolocationQuestion],
-        q3.extract[GeolocationQuestion],
-        score.toInt, answered, disabled)
-      case "Order" => Tile(QuestionKind.Order, tileId,
-        q1.extract[OrderQuestion],
-        q2.extract[OrderQuestion],
-        q3.extract[OrderQuestion],
-        score.toInt, answered, disabled)
-    }
   },{case _ => throw new RuntimeException("No serializing")}))
+
+
 }
