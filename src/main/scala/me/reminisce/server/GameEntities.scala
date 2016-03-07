@@ -16,7 +16,7 @@ object GameEntities {
                   player2Id: String,
                   player1Board: Board,
                   player2Board: Board,
-                  status: String, ///??? not sure
+                  status: String,
                   playerTurn: Int,
                   player1Scores: Int,
                   player2Scores: Int,
@@ -24,7 +24,7 @@ object GameEntities {
                   player1AvailableMoves: List[Move],
                   player2AvailableMoves: List[Move],
                   wonBy: Int,
-                  creationTime: Int //how big ???
+                  creationTime: Int
                  )
 
   case class Board(userId: String, tiles: List[Tile], boardId: String) extends RestMessage
@@ -173,9 +173,6 @@ object GameEntities {
 
   case class Location(latitude: Double, longitude: Double)
 
-
-  //case class Board(userId: String, tiles: List[Tile], isTokenStale: Boolean, strategy: String) extends RestMessage
- // case class FBFrom(userId: String, userName: String)
 
 
 }
