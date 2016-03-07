@@ -66,7 +66,7 @@ class GameEntitiesTests extends FunSuite{
     case "ORDPostLikesNumber" => SpecificQuestionType.ORDPostLikesNumber
     case "ORDPostTime" => SpecificQuestionType.ORDPostTime
     case "ORDPageLikeTime" => SpecificQuestionType.ORDPostTime
-    case _ => ??? //error TODO:
+    case _ => throw new IllegalArgumentException("Unexpected argument.")
   }
 
   def findUnit(tpe:String):TimeUnit = tpe match {
@@ -74,44 +74,62 @@ class GameEntitiesTests extends FunSuite{
     case "Week" => TimeUnit.Week
     case "Month" => TimeUnit.Month
     case "Year" => TimeUnit.Year
-    case _ => ??? //error TODO:
+    case _ => throw new IllegalArgumentException("Unexpected argument.")
   }
 
-  def extractSubject(tpe: String, s:List[(String,JValue)]) = ???
+  def extractSubject(tpe: String,s:JObject /*s:List[(String,JValue)]*/) : Option[Subject] = tpe match {
+    case "TextPost" => Some(TextPostSubject((s \ "text").extract[String]))
+    case "ImagePost" => Some(ImagePostSubject((s \ "text").extract[String], (s \ "imageUrl").extractOpt[String],(s \ "facebookImageUrl").extractOpt[String]))
+    case "VideoPost" => Some(VideoPostSubject((s \ "text").extract[String], (s \ "thumbnailUrl").extractOpt[String],(s \ "url").extractOpt[String]))
+    case "LinkPost" => Some(LinkPostSubject((s \ "text").extract[String],(s \ "thumbnailUrl").extractOpt[String],(s \ "url").extractOpt[String]))
+    case "Page" => Some(PageSubject((s \ "name").extract[String], (s \ "pageId").extract[String], (s \ "photoUrl").extractOpt[String]))
+    case "Comment" => Some(CommentSubject((s \ "comment").extract[String], ???))
+    case _ => throw new IllegalArgumentException("Unexpected argument.")
+  }
 
-  def extractChoices(choices:List[JValue]) = ???
+  def extractPossibilites(choices:List[JValue]): List[Possibility] = choices map {
+    choice => Possibility((choice \ "text").extract[String], (choice \ "imageUrl").extractOpt[String],
+      (choice \ "fbId").extractOpt[String],(choice \ "pageId").extractOpt[Int] )
+  }
 
-  def extractAnswer(answer:List[JValue]) = ???
+  def extractChoices(choices : List[JValue], tpe : String) = choices map {
+    choice => SubjectWithId((choice \ "subId").extract[Int],(choice \ "text").extract[String],
+      ???)
+  }
+
+  def extractAnswer(answers:List[JValue]) : List[Int]= answers map {
+    answer => answer.extract[Int]
+  }
 
   def extractLocation(l:List[(String,JValue)]):Location = l match {
     case JField("latitude", JDouble(latitude)) :: JField("longitude",JDouble(longitude))::_ => Location(latitude,longitude)
-    case _ => ??? // error TODO:
+    case _ => throw new IllegalArgumentException("Unexpected argument.")
   }
 
   def extractQuestion(tpe: String, q:List[(String,JValue)]): GameQuestion = tpe match {
     case "MultipleChoice" => q match {
       case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
         JField("choices",JArray(choices))::JField("answer",JInt(answer))::_ =>
-        MultipleChoiceQuestion(QuestionKind.MultipleChoice,findTpe(tpe),extractSubject(tpe,s),extractChoices(choices),answer.toInt)
+        MultipleChoiceQuestion(QuestionKind.MultipleChoice,findTpe(tpe),extractSubject(tpe,JObject(s)),extractPossibilites(choices),answer.toInt)
     }
     case "Timeline" => q match {
       case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
         JField("answer",JString(answer))::JField("min",JString(min)):: JField("max",JString(max))::JField("default",JString(default))::
         JField("unit",JString(unit))::JField("step",JInt(step)):: JField("threshold",JInt(threshold))::_ =>
-          TimelineQuestion(QuestionKind.Timeline,findTpe(tpe),extractSubject(tpe,s),answer,min,max,default,findUnit(unit),step.toInt,threshold.toInt)
+          TimelineQuestion(QuestionKind.Timeline,findTpe(tpe),extractSubject(tpe,JObject(s)),answer,min,max,default,findUnit(unit),step.toInt,threshold.toInt)
 
     }
     case "Geolocation" => q match {
       case JField("subject",JObject(s)) :: JField("range",JDouble(range)) :: JField("defaultLocation",JObject(loc))::
         JField("answer",JObject(answer))::JField("`type`",JString(tpe))::JField("kind",JString(kind))::_ =>
-            GeolocationQuestion(extractSubject(tpe,s),range,extractLocation(loc),extractLocation(answer),findTpe(tpe),QuestionKind.Geolocation)
+            GeolocationQuestion(extractSubject(tpe,JObject(s)),range,extractLocation(loc),extractLocation(answer),findTpe(tpe),QuestionKind.Geolocation)
     }
     case "Order" => q match {
       case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
         JField("choices",JArray(choices))::JField("answer",JArray(answer))::_ =>
-        OrderQuestion(QuestionKind.Order,findTpe(tpe),extractSubject(tpe,s),extractChoices(choices),extractAnswer(answer))
+        OrderQuestion(QuestionKind.Order,findTpe(tpe),extractSubject(tpe,JObject(s)),extractChoices(choices,tpe),extractAnswer(answer))
     }
-    case _ => ???
+    case _ => throw new IllegalArgumentException("Unexpected argument.")
 
   }
 
@@ -145,7 +163,7 @@ class GameEntitiesTests extends FunSuite{
                     extractQuestion(tpe,q2),
                     extractQuestion(tpe,q3),
                     score.toInt, answered, disabled)
-                case _ => ???
+                case _ => throw new IllegalArgumentException("Unexpected argument.")
               }
             }
             // case _ => Nil
@@ -215,7 +233,12 @@ class GameEntitiesTests extends FunSuite{
         ("col" -> move.col))
     }
 
-    val boardState =  ???
+    val boardState =  game.boardState map {
+      state => ("score" -> (state.score map {
+        s =>( ("player" -> s.player),
+          ("score" -> s.score))
+      }))
+    }
     val player1Board = (("userId" -> game.player1Board.userId),
       ("tiles" -> (game.player1Board.tiles map {
         tile =>( ("`type`" -> tile.`type`.toString),
