@@ -1,289 +1,507 @@
 package me.reminisce
 
-import me.reminisce.server.GameEntities.TimeUnit
-import me.reminisce.server.GameEntities.SpecificQuestionType
-import me.reminisce.server.GameEntities.SpecificQuestionType.SpecificQuestionType
-import me.reminisce.server.GameEntities.TimeUnit.TimeUnit
+import me.reminisce.server.GameEntities._
 import org.scalatest.FunSuite
-import scala.io.Source
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import me.reminisce.server.GameEntities._
 
-class GameEntitiesTests extends FunSuite{
-  implicit val formats = DefaultFormats + new GameSerializer//Serialization.formats(NoTypeHints) //+ new GameSerializer
-  val content = Source.fromFile("/Users/sandra/Documents/EPFL/BachelorProject/boards.json").getLines.mkString("\n")
-  val json = parse(content)
-  //print(json)
- json.extract[Game]
+class GameEntitiesTests extends FunSuite {
 
-  def transformQuestion(q:GameQuestion)  = q match {
-    case TimelineQuestion( kind, tpe, subject, answer, min, max, default, unit, step, threshold) =>
-      (("kind" -> kind.toString),
-        ("`type`" -> tpe.toString),
-        ("subject" -> subject.toString),
-        ("answer" -> answer.toString),
-        ("min" -> min.toString),
-        ("max" -> max.toString),
-        ("default" -> default.toString),
-        ("unit" -> unit.toString),
-        ("step" -> step.toString),
-        ("threshold" -> threshold.toString)
-        )
-    case MultipleChoiceQuestion( kind, tpe, subject, choices, answer) =>
-      ( ("kind" -> kind.toString),
-        ("`type`" -> tpe.toString),
-        ("subject" -> subject.toString), // Option ???
-        ("choices" -> choices.toString() ),
-        ("answer" -> answer.toString)
-        )
-    case GeolocationQuestion( subject, range, defaultLocation, answer, tpe, kind) =>
-      (("subject" -> subject.toString),
-        ("range" -> range.toString),
-        ("defaultLocation" -> (("latitude"-> defaultLocation.latitude.toString),("longitude" -> defaultLocation.latitude.toString))),
-        ("answer" -> (("latitude"-> answer.latitude.toString),("longitude" -> answer.latitude.toString))),
-        ("`type`" -> tpe.toString),
-        ("kind" -> kind.toString)
-        )
-    case OrderQuestion( kind, tpe, subject, choices, answer) =>
-      (("kind" -> kind.toString),
-        ("`type`" -> tpe.toString),
-        ("subject" -> subject.toString),
-        ("choices" -> choices.toString()),
-        ("answer" -> answer.toString())
-        )
+  test("PageSubject") {
+    implicit val formats = DefaultFormats
+
+    val pageSubject =
+      """{
+            "name": "Blood Bowl",
+            "pageId": "13590131663",
+            "photoUrl": "https://scontent.xx.fbcdn.net/hphotos-xaf1/v/t1.0-9/1929960_13590436663_114_n.jpg?oh=25eae23b71e482c85c7fb68d768ab4fa&oe=5632DFF0",
+            "type": "Page"
+          }"""
+
+    assert(parse(pageSubject).extract[PageSubject] == PageSubject("Blood Bowl",
+      "13590131663",
+      Some("https://scontent.xx.fbcdn.net/hphotos-xaf1/v/t1.0-9/1929960_13590436663_114_n.jpg?oh=25eae23b71e482c85c7fb68d768ab4fa&oe=5632DFF0"),
+      SubjectType.PageSubject)
+    )
   }
 
-  def findTpe(tpe : String): SpecificQuestionType = tpe match {
-    case "TLWhenDidYouShareThisPost" => SpecificQuestionType.TLWhenDidYouShareThisPost
-    case "TLWhenDidYouLikeThisPage" =>  SpecificQuestionType.TLWhenDidYouLikeThisPage
-    case "GeoWhatCoordinatesWereYouAt" => SpecificQuestionType.GeoWhatCoordinatesWereYouAt
-    case "MCWhoMadeThisCommentOnYourPost" => SpecificQuestionType.MCWhoMadeThisCommentOnYourPost
-    case "MCWhichPageDidYouLike" => SpecificQuestionType.MCWhichPageDidYouLike
-    case "MCWhoLikedYourPost" => SpecificQuestionType.MCWhoLikedYourPost
-    case "ORDPageLikes" => SpecificQuestionType.ORDPageLikes
-    case "ORDPostCommentsNumber" => SpecificQuestionType.ORDPostCommentsNumber
-    case "ORDPostLikesNumber" => SpecificQuestionType.ORDPostLikesNumber
-    case "ORDPostTime" => SpecificQuestionType.ORDPostTime
-    case "ORDPageLikeTime" => SpecificQuestionType.ORDPostTime
-    case _ => throw new IllegalArgumentException("Unexpected argument.")
+  test("TextPostSubject") {
+    implicit val formats = DefaultFormats
+
+    val textPost =
+      """{
+            "text": "I will post some weird things in the future...",
+            "type": "TextPost"
+          }"""
+
+    assert(parse(textPost).extract[TextPostSubject] == TextPostSubject("I will post some weird things in the future..."
+      , SubjectType.TextPost, None))
   }
 
-  def findUnit(tpe:String):TimeUnit = tpe match {
-    case "Day" => TimeUnit.Day
-    case "Week" => TimeUnit.Week
-    case "Month" => TimeUnit.Month
-    case "Year" => TimeUnit.Year
-    case _ => throw new IllegalArgumentException("Unexpected argument.")
+  test("ImagePostSubject") {
+    implicit val formats = DefaultFormats
+
+    val imagePost =
+      """{
+            "text": "You changed your profile picture.",
+            "imageUrl": "https://scontent.xx.fbcdn.net/hphotos-xfa1/v/t1.0-9/p180x540/396092_10151324342204968_433100355_n.jpg?oh=107c5dc045e438b5273a14d568c934c5&oe=55F0453B",
+            "facebookImageUrl": "https://www.facebook.com/photo.php?fbid=10151324342204968&set=a.499536429967.288132.656209967&type=1",
+            "type": "ImagePost"
+          }"""
+
+    assert(parse(imagePost).extract[ImagePostSubject] == ImagePostSubject("You changed your profile picture.",
+      Some("https://scontent.xx.fbcdn.net/hphotos-xfa1/v/t1.0-9/p180x540/396092_10151324342204968_433100355_n.jpg?oh=107c5dc045e438b5273a14d568c934c5&oe=55F0453B"),
+      Some("https://www.facebook.com/photo.php?fbid=10151324342204968&set=a.499536429967.288132.656209967&type=1"), SubjectType.ImagePost, None))
   }
 
-  def extractSubject(tpe: String,s:JObject /*s:List[(String,JValue)]*/) : Option[Subject] = tpe match {
-    case "TextPost" => Some(TextPostSubject((s \ "text").extract[String]))
-    case "ImagePost" => Some(ImagePostSubject((s \ "text").extract[String], (s \ "imageUrl").extractOpt[String],(s \ "facebookImageUrl").extractOpt[String]))
-    case "VideoPost" => Some(VideoPostSubject((s \ "text").extract[String], (s \ "thumbnailUrl").extractOpt[String],(s \ "url").extractOpt[String]))
-    case "LinkPost" => Some(LinkPostSubject((s \ "text").extract[String],(s \ "thumbnailUrl").extractOpt[String],(s \ "url").extractOpt[String]))
-    case "Page" => Some(PageSubject((s \ "name").extract[String], (s \ "pageId").extract[String], (s \ "photoUrl").extractOpt[String]))
-    case "Comment" => Some(CommentSubject((s \ "comment").extract[String], ???))
-    case _ => throw new IllegalArgumentException("Unexpected argument.")
-  }
+  test("VideoPostSubject") {
+    implicit val formats = DefaultFormats
 
-  def extractPossibilites(choices:List[JValue]): List[Possibility] = choices map {
-    choice => Possibility((choice \ "text").extract[String], (choice \ "imageUrl").extractOpt[String],
-      (choice \ "fbId").extractOpt[String],(choice \ "pageId").extractOpt[Int] )
-  }
-
-  def extractChoices(choices : List[JValue], tpe : String) = choices map {
-    choice => SubjectWithId((choice \ "subId").extract[Int],(choice \ "text").extract[String],
-      ???)
-  }
-
-  def extractAnswer(answers:List[JValue]) : List[Int]= answers map {
-    answer => answer.extract[Int]
-  }
-
-  def extractLocation(l:List[(String,JValue)]):Location = l match {
-    case JField("latitude", JDouble(latitude)) :: JField("longitude",JDouble(longitude))::_ => Location(latitude,longitude)
-    case _ => throw new IllegalArgumentException("Unexpected argument.")
-  }
-
-  def extractQuestion(tpe: String, q:List[(String,JValue)]): GameQuestion = tpe match {
-    case "MultipleChoice" => q match {
-      case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
-        JField("choices",JArray(choices))::JField("answer",JInt(answer))::_ =>
-        MultipleChoiceQuestion(QuestionKind.MultipleChoice,findTpe(tpe),extractSubject(tpe,JObject(s)),extractPossibilites(choices),answer.toInt)
-    }
-    case "Timeline" => q match {
-      case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
-        JField("answer",JString(answer))::JField("min",JString(min)):: JField("max",JString(max))::JField("default",JString(default))::
-        JField("unit",JString(unit))::JField("step",JInt(step)):: JField("threshold",JInt(threshold))::_ =>
-          TimelineQuestion(QuestionKind.Timeline,findTpe(tpe),extractSubject(tpe,JObject(s)),answer,min,max,default,findUnit(unit),step.toInt,threshold.toInt)
-
-    }
-    case "Geolocation" => q match {
-      case JField("subject",JObject(s)) :: JField("range",JDouble(range)) :: JField("defaultLocation",JObject(loc))::
-        JField("answer",JObject(answer))::JField("`type`",JString(tpe))::JField("kind",JString(kind))::_ =>
-            GeolocationQuestion(extractSubject(tpe,JObject(s)),range,extractLocation(loc),extractLocation(answer),findTpe(tpe),QuestionKind.Geolocation)
-    }
-    case "Order" => q match {
-      case JField("kind", JString(kind))::JField("`type`",JString(tpe))::JField("subject",JObject(s))::
-        JField("choices",JArray(choices))::JField("answer",JArray(answer))::_ =>
-        OrderQuestion(QuestionKind.Order,findTpe(tpe),extractSubject(tpe,JObject(s)),extractChoices(choices,tpe),extractAnswer(answer))
-    }
-    case _ => throw new IllegalArgumentException("Unexpected argument.")
-
-  }
-
-  class GameSerializer extends CustomSerializer[Game]( format => ({
-    case JObject(
-      JField("_id", JString(gameId)) ::
-      JField("player1", JString(player1Id)) ::
-      JField("player2", JString(player2Id)) ::
-      JField("player1Board",JObject(player1Board))::
-      JField("player2Board",JObject(player2Board))::
-      JField("status",JString(status))::
-      JField("playerTurn",JInt(playerTurn))::
-      JField("player1Scores",JInt(player1Scores))::
-      JField("player2Scores",JInt(player2Scores))::
-      JField("boardState",JArray(boardState))::
-      JField("player1AvailableMoves",JArray(player1AvailableMoves))::
-      JField("player2AvailableMoves",JArray(player2AvailableMoves))::
-      JField("wonBy",JInt(wonBy))::
-      JField("creationTime", JInt(creationTime))::_) =>
-      implicit val formats = DefaultFormats
-      val player1Board = (json \ "player1Board") match {
-        case JObject(JField("userId", JString(userId)) :: _) =>
-          val tiles = (json \ "player1Board" \ "tiles") match {
-            case JArray(t) => t map {
-              tile => tile match {
-                case JObject(JField("_id",JString(tileId)) :: JField("`type`",JString(tpe))::
-                  JField("question1",JObject(q1))::JField("question2",JObject(q2))::JField("question3",JObject(q3))::
-                  JField("score", JInt(score))::JField("answered", JBool(answered))::JField("disabled", JBool(disabled))::_) =>
-                  Tile(QuestionKind.MultipleChoice, tileId,
-                    extractQuestion(tpe,q1),
-                    extractQuestion(tpe,q2),
-                    extractQuestion(tpe,q3),
-                    score.toInt, answered, disabled)
-                case _ => throw new IllegalArgumentException("Unexpected argument.")
-              }
+    val videoPost =
+      """{
+            "text": "Roger Küng shared a link.",
+            "thumbnailUrl": "https://external.xx.fbcdn.net/safe_image.php?d=AQBgK6vGG5nYP2hm&w=720&h=720&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2FfzMhh8zhTiY%2F0.jpg&cfs=1",
+            "url": "http://www.youtube.com/watch?v=fzMhh8zhTiY",
+            "type": "VideoPost",
+            "from": {
+                "userId": "656209967",
+                "userName": "Roger Küng"
             }
-            // case _ => Nil
-          }
-          Board(userId, tiles, (json \ "player2Board" \ "boardId").extract[String])
-      }
-      val player2Board = (json \ "player2Board") match {
-        case JObject(JField("userId", JString(userId)) :: _) =>
-          val tiles = (json \ "player2Board" \ "tiles") match {
-            case JArray(t) => t map {
-              tile => tile match {
-                case JObject(JField("_id",JString(tileId)) :: JField("`type`",JString(tpe))::
-                JField("question1",JObject(q1))::JField("question2",JObject(q2))::JField("question3",JObject(q3))::
-                JField("score", JInt(score))::JField("answered", JBool(answered))::JField("disabled", JBool(disabled))::_) =>
-                Tile(QuestionKind.MultipleChoice, tileId,
-                  extractQuestion(tpe,q1),
-                  extractQuestion(tpe,q2),
-                  extractQuestion(tpe,q3),
-                  score.toInt, answered, disabled)
-              }
+          }"""
+
+    assert(parse(videoPost).extract[VideoPostSubject] == VideoPostSubject("Roger Küng shared a link.",
+      Some("https://external.xx.fbcdn.net/safe_image.php?d=AQBgK6vGG5nYP2hm&w=720&h=720&url=http%3A%2F%2Fi.ytimg.com%2Fvi%2FfzMhh8zhTiY%2F0.jpg&cfs=1"),
+      Some("http://www.youtube.com/watch?v=fzMhh8zhTiY"), SubjectType.VideoPost,
+      Some(FBFrom("656209967", "Roger Küng"))))
+  }
+
+
+  test("LinkPostSubject") {
+    implicit val formats = DefaultFormats
+
+    val linkPost =
+      """{
+            "text": "I guess the U.S. Healthcare state needs some readjustment",
+            "thumbnailUrl": "https://external.xx.fbcdn.net/safe_image.php?d=AQBP8YvTVf_VKUMb&w=720&h=720&url=http%3A%2F%2Fi.imgur.com%2FBbQgU8a.jpg&cfs=1",
+            "url": "http://redditpics.fpapps.com/?thingid=t3_3dngld&url=http%3A%2F%2Fi.imgur.com%2FBbQgU8a.jpg",
+            "type": "LinkPost",
+            "from": {
+                "userId": "656209967",
+                "userName": "Roger Küng"
             }
-           // case _ => Nil
-          }
-          Board(userId, tiles, (json \ "player2Board" \ "boardId").extract[String])
-      }
-      //val status = (json \ "status").extract[String]
-      //val playerTurn = (json \ "playerTurn").extract[BigInt].toInt
-      //val player1Scores = (json \ "player1Scores").extract[BigInt].toInt
+         }"""
 
-      val player2Scores = (json \ "player2Scores").extract[BigInt].toInt
-      val boardState = (json \ "boardState") match {
-        case JArray(s) => s map {
-          state => val st = (state \ "score") match {
-            case JArray(sc) => sc map {
-              score => Score((score \ "player").extract[BigInt].toInt, (score \ "score").extract[BigInt].toInt)
-            }
-          }
-            s.asInstanceOf[State]
-        }
-
-      }
-      val player1AvailableMoves = (json \ "player1AvailableMoves") match {
-        case JArray(m) => m map {
-          move => Move((move \ "row").extract[BigInt].toInt, (move \ "col").extract[BigInt].toInt)
-        }
-      }
-      val player2AvailableMoves = (json \ "player2AvailableMoves") match {
-        case JArray(m) => m map {
-          move => Move((move \ "row").extract[BigInt].toInt, (move \ "col").extract[BigInt].toInt)
-        }
-      }
-      val wonBy = (json \ "wonBy").extract[BigInt].toInt
-      val creationTime = (json \ "creationTime").extract[BigInt].toInt
-
-      Game(gameId, player1Id, player2Id, player1Board, player2Board, status, playerTurn.toInt,
-        player1Scores.toInt,player2Scores.toInt, boardState, player1AvailableMoves, player2AvailableMoves, wonBy.toInt, creationTime.toInt)
-
-  }, {case game: Game =>
-      implicit val fmts = formats
-      val player2AvailableMoves = game.player2AvailableMoves map {
-        move => (("row" -> move.row),
-          ("col" -> move.col))
-      }
-
-    val player1AvailableMoves = game.player2AvailableMoves map {
-      move => (("row" -> move.row),
-        ("col" -> move.col))
-    }
-
-    val boardState =  game.boardState map {
-      state => ("score" -> (state.score map {
-        s =>( ("player" -> s.player),
-          ("score" -> s.score))
-      }))
-    }
-    val player1Board = (("userId" -> game.player1Board.userId),
-      ("tiles" -> (game.player1Board.tiles map {
-        tile =>( ("`type`" -> tile.`type`.toString),
-          ("tileId" -> tile.tileId),
-          ("question1" ->transformQuestion(tile.question1)),
-          ("question2" ->transformQuestion(tile.question2)),
-          ("question3" ->transformQuestion(tile.question3)),
-          ("score" -> tile.score.toString),
-          ("answered" -> tile.answered.toString),
-          ("disabled" -> tile.disabled.toString))})
-      ))
-    val player2Board = (("userId" -> game.player2Board.userId),
-      ("tiles" -> (game.player2Board.tiles map {
-        tile => (("`type`" -> tile.`type`.toString),
-          ("tileId" -> tile.tileId.toString),
-          ("question1" ->transformQuestion(tile.question1)),
-          ("question2" ->transformQuestion(tile.question2)),
-          ("question3" ->transformQuestion(tile.question3)),
-          ("score" -> tile.score.toString),
-          ("answered" -> tile.answered.toString),
-          ("disabled" -> tile.disabled.toString))})
-      ))
-
-    val status = ("status" -> game.status)
-    val playerTurn = ("playerTurn" -> game.playerTurn.toString)
-    val player1Scores = ("player1Scores" -> game.player1Scores.toString)
-    val player2Scores = ("player2Scores" -> game.player2Scores.toString)
-    val wonBy = ("wonBy" -> game.wonBy.toString)
-    val creationTime = ("creationTime" -> game.creationTime.toString)
-    val gameId = ("gameId" -> game.gameId)
-    val player1Id = ("player1Id" -> game.player1Id)
-    val player2Id = ("player2Id" -> game.player2Id )
-    throw new RuntimeException("No serializing") //TODO:
-
-  }))
-  /*class TileSerializer extends CustomSerializer[Tile]( format => ({
-    case JObject(JField("_id",JString(tileId)) :: JField("`type`",JString(tpe))::
-      JField("question1",JObject(q1))::JField("question2",JObject(q2))::JField("question3",JObject(q3))::
-      JField("score", JInt(score))::JField("answered", JBool(answered))::JField("disabled", JBool(disabled))::_) =>
-      Tile(QuestionKind.MultipleChoice, tileId,
-        extractQuestion(tpe,q1),
-        extractQuestion(tpe,q2),
-        extractQuestion(tpe,q3),
-        score.toInt, answered, disabled)
-  },{case _ => throw new RuntimeException("No serializing")}))*/
+    assert(parse(linkPost).extract[LinkPostSubject] == LinkPostSubject("I guess the U.S. Healthcare state needs some readjustment",
+      Some("https://external.xx.fbcdn.net/safe_image.php?d=AQBP8YvTVf_VKUMb&w=720&h=720&url=http%3A%2F%2Fi.imgur.com%2FBbQgU8a.jpg&cfs=1"),
+      Some("http://redditpics.fpapps.com/?thingid=t3_3dngld&url=http%3A%2F%2Fi.imgur.com%2FBbQgU8a.jpg"), SubjectType.LinkPost,
+      Some(FBFrom("656209967", "Roger Küng"))))
 
 
+  }
+
+  test("CommentSubject") {
+    implicit val formats = DefaultFormats
+
+    val comment =
+      """{
+            "comment": "I just noticed that. How is it scientific if it's not your usual and natural behavior ? ;)",
+            "post": {
+                "text": "I will post some weird things in the future, but its for science so be prepared to see some abnormal activity...",
+                "type": "TextPost"
+            },
+            "type": "Comment"
+          }"""
+
+    assert(parse(comment).extract[CommentSubject] == CommentSubject("I just noticed that. How is it scientific if it's not your usual and natural behavior ? ;)",
+      None, SubjectType.CommentSubject))
+
+
+  }
+
+
+  test("TimelineQuestion") {
+    implicit val formats = DefaultFormats
+
+    val question =
+      """ {
+            "subject": {},
+            "min": "2015-06-03T11:41:09+0000",
+            "max": "2015-06-07T11:41:09+0000",
+            "default": "2015-06-03T11:41:09+0000",
+            "unit": "Day",
+            "step": 1,
+            "threshold": 0,
+            "answer": "2015-06-07T11:41:09+0000",
+            "type": "TLWhenDidYouShareThisPost",
+            "kind": "Timeline"
+          }"""
+
+    assert(parse(question).extract[TimelineQuestion] == TimelineQuestion(None,
+      "2015-06-03T11:41:09+0000", "2015-06-07T11:41:09+0000", "2015-06-03T11:41:09+0000",
+      "Day", 1, 0, "2015-06-07T11:41:09+0000", QuestionKind.Timeline, "TLWhenDidYouShareThisPost"))
+  }
+
+  test("MultipleChoiceQuestion") {
+    implicit val formats = DefaultFormats
+
+    val question =
+      """ {
+            "subject": {},
+            "choices": [
+            {
+              "text": "Maria Maria",
+              "imageUrl": null,
+              "fbId": "10152584486929069",
+              "pageId": null
+            },
+            {
+              "text": "Zelal Al-Shemmery",
+              "imageUrl": null,
+              "fbId": "768569646537959",
+              "pageId": null
+            },
+            {
+              "text": "Christian M. Schmid",
+              "imageUrl": null,
+              "fbId": "10201396264188446",
+              "pageId": null
+            },
+            {
+              "text": "Michalina Pacholska",
+              "imageUrl": null,
+              "fbId": "714035445332109",
+              "pageId": null
+            }],
+            "answer": 1,
+            "type": "MCWhoLikedYourPost",
+            "kind": "MultipleChoice"
+          }"""
+
+    assert(parse(question).extract[MultipleChoiceQuestion] == MultipleChoiceQuestion(QuestionKind.MultipleChoice, "MCWhoLikedYourPost",
+      None, List(Possibility("Maria Maria", None, Some("10152584486929069"), None), Possibility("Zelal Al-Shemmery", None, Some("768569646537959"), None)
+        , Possibility("Christian M. Schmid", None, Some("10201396264188446"), None),
+        Possibility("Michalina Pacholska", None, Some("714035445332109"), None)), 1))
+  }
+
+  test("GeolocationQuestion") {
+    implicit val formats = DefaultFormats
+
+    val question =
+      """{
+                               "subject": {},
+                               "range": 0.02612831795,
+                               "defaultLocation": {
+                                 "latitude": 46.54730608686859,
+                                 "longitude": 6.57538616738275
+                               },
+                               "answer": {
+                                 "latitude": 46.519681242464,
+                                 "longitude": 6.5717116820427
+                               },
+                               "type": "GeoWhatCoordinatesWereYouAt",
+                               "kind": "Geolocation"
+                             }"""
+
+    assert(parse(question).extract[GeolocationQuestion] == GeolocationQuestion(None, 0.02612831795,
+      Location(46.54730608686859, 6.57538616738275), Location(46.519681242464, 6.5717116820427),
+      "GeoWhatCoordinatesWereYouAt", QuestionKind.Geolocation))
+
+  }
+
+  test("OrderQuestion") {
+    implicit val formats = DefaultFormats
+
+    val question =
+      """{
+      "choices": [
+      {
+        "subject": {},
+        "uId": 2
+      },
+      {
+        "subject": {},
+        "uId": 1
+      },
+      {
+        "subject": {},
+        "uId": 0
+      } ],
+      "items": [
+      {
+        "id": 2,
+        "text": "Blood Bowl",
+        "subject": {}
+      },
+      {
+        "id": 1,
+        "text": "Heroes of Newerth",
+        "subject": {}
+      },
+      {
+        "id": 0,
+        "text": "Archon",
+        "subject": {}
+      } ],
+      "answer": [
+        0,
+        2,
+        1
+      ],
+      "type": "ORDPageLike",
+      "kind": "Order"
+      }"""
+
+    assert(parse(question).extract[OrderQuestion] == OrderQuestion(QuestionKind.Order, "ORDPageLike",
+      None, List(SubjectWithId(2, None, None), SubjectWithId(1, None, None), SubjectWithId(0, None, None)), List(0, 2, 1)))
+  }
+
+  test("Tile") {
+    implicit val formats = DefaultFormats
+
+    val tile =
+      """{
+      "_id": "87c565b56f7fc92ff8617c2b",
+      "type": "Timeline",
+      "question1": {},
+      "question2": {},
+      "question3": {},
+      "score": 0,
+      "answered": false,
+      "disabled": false
+    }"""
+
+    assert(parse(tile).extract[Tile] == Tile("Timeline", "87c565b56f7fc92ff8617c2b", None, None, None, 0, false, false))
+  }
+
+  test("Board") {
+    implicit val formats = DefaultFormats
+
+    val board =
+      """{
+                      "userId": "MmYXQ5EKSgdjzP3uJ",
+                      "tiles": [
+                        {
+                          "_id": "79c2378123949e4386631412",
+                          "type": "MultipleChoice",
+                          "question1": {},
+                          "question2": {},
+                          "question3": {},
+                          "score": 0,
+                          "answered": false,
+                          "disabled": false
+                        },
+                        {
+                          "_id": "9119c06edf2e473772ea37a2",
+                          "type": "Order",
+                          "question1": {},
+                          "question2": {},
+                          "question3": {},
+                          "score": 0,
+                          "answered": false,
+                          "disabled": false
+                        },
+                        {
+                          "_id": "b7893b57c6ba4350fb3d977a",
+                          "type": "Order",
+                          "question1": {},
+                          "question2": {},
+                          "question3": {},
+                          "score": 0,
+                          "answered": false,
+                          "disabled": false
+                        },
+                        {
+
+                         "_id": "6cb42b812a48c42cc4b0024c",
+                          "type": "MultipleChoice",
+                          "question1": {},
+                          "question2": {},
+                          "question3": {},
+                          "score": 0,
+                          "answered": false,
+                          "disabled": false
+                        }
+                      ],
+                      "_id": "wQz5dAXnpDcyvrJud"
+                    }"""
+
+    assert(parse(board).extract[Board] == Board("MmYXQ5EKSgdjzP3uJ", List(Tile("MultipleChoice", "79c2378123949e4386631412", None, None, None, 0, false, false),
+      Tile("Order", "9119c06edf2e473772ea37a2", None, None, None, 0, false, false),
+      Tile("Order", "b7893b57c6ba4350fb3d977a", None, None, None, 0, false, false),
+      Tile("MultipleChoice", "6cb42b812a48c42cc4b0024c", None, None, None, 0, false, false)),
+      "wQz5dAXnpDcyvrJud"))
+  }
+
+  test("Game") {
+    implicit val formats = DefaultFormats
+
+    val game =
+      """{
+                   "_id": "qS3MNajyD4qd2RYpy",
+                   "player1": "MmYXQ5EKSgdjzP3uJ",
+                   "player2": "wucQxKHvs5W9Ao9y9",
+                   "player1Board": {
+                      "userId": "MmYXQ5EKSgdjzP3uJ",
+                      "tiles": [
+
+
+                      {
+                        "_id": "9119c06edf2e473772ea37a2",
+                        "type": "Order",
+                        "question1": {},
+                        "question2": {},
+                        "question3": {},
+                        "score": 0,
+                        "answered": false,
+                        "disabled": false
+                      },
+                      {
+                        "_id": "b7893b57c6ba4350fb3d977a",
+                        "type": "Order",
+                        "question1": {},
+                        "question2": {},
+                        "question3": {},
+                        "score": 0,
+                        "answered": false,
+                        "disabled": false
+                      },
+                      {
+                        "_id": "6cb42b812a48c42cc4b0024c",
+                        "type": "MultipleChoice",
+                        "question1": {},
+                        "question2": {},
+                        "question3": {},
+                        "score": 0,
+                        "answered": false,
+                        "disabled": false
+                      }
+                      ],
+                      "_id": "wQz5dAXnpDcyvrJud"
+                    },
+                   "player2Board": {
+                     "userId": "wucQxKHvs5W9Ao9y9",
+                     "tiles": [
+
+                       {
+                         "_id": "7fe68a7b1edf66b0dae1aaac",
+                         "type": "Geolocation",
+                         "question1": {},
+                         "question2": {},
+                         "question3": {},
+                         "score": 0,
+                         "answered": false,
+                         "disabled": false
+                       },
+                       {
+                         "_id": "099a1cec7b072135919f04fb",
+                         "type": "MultipleChoice",
+                         "question1": {},
+                         "question2": {},
+                         "question3": {},
+                         "score": 0,
+                         "answered": false,
+                         "disabled": false
+                       }
+                     ],
+                     "_id": "fAYrgj74h9dv9Dhmq"
+                   },
+                   "status": "ended",
+                   "playerTurn": 1,
+                   "player1Scores": 3,
+                   "player2Scores": 7,
+                   "boardState": [
+                     [
+                       {
+                         "player": 1,
+                         "score": 0
+                       },
+                       {
+                         "player": 2,
+                         "score": 0
+                       },
+                       {
+                         "player": 2,
+                         "score": 3
+                       }
+                     ],
+                     [
+                       {
+                         "player": 2,
+                         "score": 0
+                       },
+                       {
+                         "player": 2,
+                         "score": 3
+                       },
+                       {
+                         "player": 1,
+                         "score": 0
+                       }
+                     ],
+                     [
+                       {
+                         "player": 2,
+                         "score": 1
+                       },
+                       {
+                         "player": 1,
+                         "score": 1
+                       },
+                       {
+                         "player": 0,
+                         "score": 0
+                       }
+                     ]
+                   ],
+                   "player1AvailableMoves": [
+                     {
+                       "row": 0,
+                       "column": 1
+                     },
+                     {
+                       "row": 1,
+                       "column": 0
+                     },
+                     {
+                       "row": 2,
+                       "column": 0
+                     },
+                     {
+                       "row": 2,
+                       "column": 2
+                     }
+                   ],
+                   "player2AvailableMoves": [
+                     {
+                       "row": 0,
+                       "column": 0
+                     },
+                     {
+                       "row": 1,
+                       "column": 2
+                     },
+                     {
+                       "row": 2,
+                       "column": 1
+                     },
+                     {
+                       "row": 2,
+                       "column": 2
+                     }
+                   ],
+                   "wonBy": 2,
+                   "creationTime": 1456062881638
+                 }"""
+
+    assert(parse(game).extract[Game] == Game("qS3MNajyD4qd2RYpy", "MmYXQ5EKSgdjzP3uJ", "wucQxKHvs5W9Ao9y9",
+      Board("MmYXQ5EKSgdjzP3uJ", List(Tile("Order", "9119c06edf2e473772ea37a2", None, None, None, 0, false, false),
+        Tile("Order", "b7893b57c6ba4350fb3d977a", None, None, None, 0, false, false),
+        Tile("MultipleChoice", "6cb42b812a48c42cc4b0024c", None, None, None, 0, false, false)), "wQz5dAXnpDcyvrJud"),
+      Board("wucQxKHvs5W9Ao9y9", List(Tile("Geolocation", "7fe68a7b1edf66b0dae1aaac", None, None, None, 0, false, false),
+        Tile("MultipleChoice", "099a1cec7b072135919f04fb", None, None, None, 0, false, false)), "fAYrgj74h9dv9Dhmq"),
+      "ended", 1, 3, 7, List(List(Score(1, 0), Score(2, 0), Score(2, 3)), List(Score(2, 0), Score(2, 3), Score(1, 0)),
+        List(Score(2, 1), Score(1, 1), Score(0, 0))), List(Move(0, 1), Move(1, 0), Move(2, 0), Move(2, 2)), List(Move(0, 0),
+        Move(1, 2), Move(2, 1), Move(2, 2)), 2, 68968294))
+
+  }
 }
