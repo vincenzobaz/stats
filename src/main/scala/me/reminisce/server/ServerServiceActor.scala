@@ -1,7 +1,8 @@
 package me.reminisce.server
 
 import akka.actor.{Actor, ActorLogging}
-import reactivemongo.api.{MongoConnection, MongoDriver}
+import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * The actor handling the http request in this application. It handles the requests according to the
@@ -10,12 +11,22 @@ import reactivemongo.api.{MongoConnection, MongoDriver}
 class ServerServiceActor extends Actor with StatsServiceActor with ActorLogging {
   override def actorRefFactory = context
 
-  override def receive = runRoute(statsRoutes)
-
   val driver = new MongoDriver
   val mongoHost = ApplicationConfiguration.mongoHost
   val mongodbName = ApplicationConfiguration.mongodbName
   val connection: MongoConnection = driver.connection(List(mongoHost))
+  
+  override val db: DefaultDB = connection(mongodbName)
+  
+
+  override def receive = runRoute(statsRoutes)
+  
+
+
+
+  
+
+  
 
 
   /**

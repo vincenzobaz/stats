@@ -17,22 +17,23 @@ object DummyService {
  case class Result(username: String, score: Int)
 
 
-  def props(/*database: DefaultDB*/): Props = 
-    Props(new DummyService(/*database*/))
+  def props(database: DefaultDB): Props = 
+    Props(new DummyService(database))
 }
 
-class DummyService(/*database: DefaultDB*/) extends Actor with ActorLogging {
+class DummyService(database: DefaultDB) extends Actor with ActorLogging {
 
   import DummyService._
 
   def receive = {
 	case Search(username) =>
-	  log.info(s"Received Search message with $username")
-	  val dummyWorker = context.actorOf(Props[DummyWorker])    
+
+	  val dummyWorker = context.actorOf(DummyWorker.props(database))    
 	  dummyWorker ! DummyService.Search(username)
+
 	case Result(username, score) =>
 	log.info(s" $username's score average is: $score")
-	  //context.parent ! Result(score)
+	 
 
   }
 }

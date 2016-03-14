@@ -6,6 +6,7 @@ import me.reminisce.dummy._
 import me.reminisce.database._
 import spray.routing._
 import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
+import reactivemongo.api.DefaultDB
 
 object StatsService
 
@@ -24,7 +25,8 @@ trait StatsServiceActor extends StatsService {
 trait StatsService extends HttpService with RESTHandlerCreator with Actor with ActorLogging {
   def actorRefFactory: ActorContext
 
-  val test = "coucou"
+  val db: DefaultDB
+  
   val statsRoutes = {
 
    
@@ -35,22 +37,28 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         }
       }
     } ~ path("dbtest"){
-      //parameters("") {
-        //(UNUSED: String) =>
-        log.info(s"In DB test path")
-          testDB(DummyService.Search("Audrey Loeffel"))
-     //}
+     /* /!\ executed only once when the route is 
+      val username = "Audrey Loeffel"
+      log.info(s"Test a query with user_id: $username.")
+      testDB(DummyService.Search(username))
+      */
+      get{
+        parameters("username"){
+          (username) =>
+           testDB{
+            DummyService.Search(username)
+           }
+        }
+      }
       
     }
-
-    
-    
-
   }
+
+
   private def testDB(message: RestMessage): Route = {
     
-
-    val dummyService = context.actorOf(Props[DummyService])
+    log.info(s"Need db: $db")
+    val dummyService = context.actorOf(DummyService.props(db))
     log.info("DummyService created")
     ctx => perRequest(ctx, dummyService, message)
   }  
