@@ -16,6 +16,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import reactivemongo.api._
 import reactivemongo.bson._
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
+
 
 /**
   * Factory for [[me.reminisce.database.MongoDatabaseService]], collection names definition, case class for message
@@ -57,7 +59,34 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
   
     case Query(username) =>
       
-      context.parent ! DummyService.Result(username, 123634)
+      val usersCol = db.collection[BSONCollection](MongoDatabaseService.usersCollection)
+      
+      val query = BSONDocument(
+        "name" -> username)
+      val emptyquery = BSONDocument()
+
+      val scorePerson: Future[List[BSONDocument]] =  
+        usersCol.
+        find(emptyquery). 
+        cursor[BSONDocument].collect[List]()
+      
+      
+      scorePerson.onComplete {
+        case Success(score) => {
+          log.info("success!")
+          println(score)
+          score.foreach(doc => println(doc.get("name")))
+          context.parent ! DummyService.Result(username, 123634)
+        }
+        case o => {
+          log.info("The query failed!")
+          context.parent ! DummyWorker.Abort
+        }  
+      }
+
+      
+      log.info("query accomplished")
+     
       
   }
 

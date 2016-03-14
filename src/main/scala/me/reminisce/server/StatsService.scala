@@ -37,11 +37,6 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         }
       }
     } ~ path("dbtest"){
-     /* /!\ executed only once when the route is 
-      val username = "Audrey Loeffel"
-      log.info(s"Test a query with user_id: $username.")
-      testDB(DummyService.Search(username))
-      */
       get{
         parameters("username"){
           (username) =>
@@ -50,16 +45,14 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
            }
         }
       }
-      
+   
     }
   }
 
 
   private def testDB(message: RestMessage): Route = {
     
-    log.info(s"Need db: $db")
     val dummyService = context.actorOf(DummyService.props(db))
-    log.info("DummyService created")
     ctx => perRequest(ctx, dummyService, message)
   }  
 }
