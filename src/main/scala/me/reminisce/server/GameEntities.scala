@@ -101,38 +101,36 @@ object GameEntities {
     */
   abstract sealed class GameQuestion(kind: QuestionKind, `type`: String)
 
-  case class MultipleChoiceQuestion(
-                                     kind: QuestionKind = QuestionKind.MultipleChoice,
-                                     `type`: String,
-                                     subject: Option[Subject],
-                                     choices: List[Possibility],
-                                     answer: Int) extends GameQuestion(kind, `type`)
+  case class MultipleChoiceQuestion(kind: QuestionKind = QuestionKind.MultipleChoice,
+                                    `type`: String,
+                                    subject: Option[Subject],
+                                    choices: List[Possibility],
+                                    answer: Int) extends GameQuestion(kind, `type`)
 
-  case class TimelineQuestion(
+  case class TimelineQuestion(subject: Option[Subject],
+                              min: String,
+                              max: String,
+                              default: String,
+                              unit: String,
+                              step: Int,
+                              threshold: Int,
+                              answer: String,
+                              kind: QuestionKind = QuestionKind.Timeline,
+                              `type`: String) extends GameQuestion(kind, `type`)
 
-                               subject: Option[Subject],
-                               min: String,
-                               max: String,
-                               default: String,
-                               unit: String,
-                               step: Int,
-                               threshold: Int,
-                               answer: String,
-                               kind: QuestionKind = QuestionKind.Timeline,
-                               `type`: String) extends GameQuestion(kind, `type`)
-
-  case class OrderQuestion(
-                            kind: QuestionKind = QuestionKind.Order,
-                            `type`: String,
-                            subject: Option[Subject],
-                            choices: List[SubjectWithId],
-                            answer: List[Int]
+  case class OrderQuestion(kind: QuestionKind = QuestionKind.Order,
+                           `type`: String,
+                           choices: List[SubjectWithId],
+                           items: List[Item],
+                           answer: List[Int]
                           ) extends GameQuestion(kind, `type`)
 
-  case class SubjectWithId(uId: Int, text: Option[String], subject: Option[Subject])
+  case class SubjectWithId(uId: Int, subject: Option[Subject])
+
+  case class Item(id: Int, text: String, subject: Option[Subject])
 
 
-  case class Possibility(text: String, imageUrl: Option[String] = None, fbId: Option[String] = None, pageId: Option[Int] = None)
+  case class Possibility(text: String, imageUrl: Option[String], fbId: Option[String], pageId: Option[Int])
 
   case class GeolocationQuestion(subject: Option[Subject],
                                  range: Double,

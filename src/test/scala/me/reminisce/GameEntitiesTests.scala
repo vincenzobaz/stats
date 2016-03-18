@@ -1,6 +1,13 @@
 package me.reminisce
 
+import java.io.InputStream
 import me.reminisce.server.GameEntities._
+import org.json4s.JDouble
+import org.json4s.JInt
+import org.json4s.JsonAST.JArray
+import org.json4s.JsonAST.JField
+import org.json4s.JsonAST.JObject
+import org.json4s.JsonAST.JString
 import org.scalatest.FunSuite
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -12,11 +19,11 @@ class GameEntitiesTests extends FunSuite {
 
     val pageSubject =
       """{
-            "name": "Blood Bowl",
-            "pageId": "13590131663",
-            "photoUrl": "https://scontent.xx.fbcdn.net/hphotos-xaf1/v/t1.0-9/1929960_13590436663_114_n.jpg?oh=25eae23b71e482c85c7fb68d768ab4fa&oe=5632DFF0",
-            "type": "Page"
-          }"""
+             "name": "Blood Bowl",
+             "pageId": "13590131663",
+             "photoUrl": "https://scontent.xx.fbcdn.net/hphotos-xaf1/v/t1.0-9/1929960_13590436663_114_n.jpg?oh=25eae23b71e482c85c7fb68d768ab4fa&oe=5632DFF0",
+             "type": "Page"
+           }"""
 
     assert(parse(pageSubject).extract[PageSubject] == PageSubject("Blood Bowl",
       "13590131663",
@@ -75,7 +82,6 @@ class GameEntitiesTests extends FunSuite {
       Some(FBFrom("656209967", "Roger Küng"))))
   }
 
-
   test("LinkPostSubject") {
     implicit val formats = DefaultFormats
 
@@ -95,8 +101,6 @@ class GameEntitiesTests extends FunSuite {
       Some("https://external.xx.fbcdn.net/safe_image.php?d=AQBP8YvTVf_VKUMb&w=720&h=720&url=http%3A%2F%2Fi.imgur.com%2FBbQgU8a.jpg&cfs=1"),
       Some("http://redditpics.fpapps.com/?thingid=t3_3dngld&url=http%3A%2F%2Fi.imgur.com%2FBbQgU8a.jpg"), SubjectType.LinkPost,
       Some(FBFrom("656209967", "Roger Küng"))))
-
-
   }
 
   test("CommentSubject") {
@@ -114,8 +118,6 @@ class GameEntitiesTests extends FunSuite {
 
     assert(parse(comment).extract[CommentSubject] == CommentSubject("I just noticed that. How is it scientific if it's not your usual and natural behavior ? ;)",
       None, SubjectType.CommentSubject))
-
-
   }
 
 
@@ -187,7 +189,7 @@ class GameEntitiesTests extends FunSuite {
     implicit val formats = DefaultFormats
 
     val question =
-      """{
+                         """{
                                "subject": {},
                                "range": 0.02612831795,
                                "defaultLocation": {
@@ -206,53 +208,6 @@ class GameEntitiesTests extends FunSuite {
       Location(46.54730608686859, 6.57538616738275), Location(46.519681242464, 6.5717116820427),
       "GeoWhatCoordinatesWereYouAt", QuestionKind.Geolocation))
 
-  }
-
-  test("OrderQuestion") {
-    implicit val formats = DefaultFormats
-
-    val question =
-      """{
-      "choices": [
-      {
-        "subject": {},
-        "uId": 2
-      },
-      {
-        "subject": {},
-        "uId": 1
-      },
-      {
-        "subject": {},
-        "uId": 0
-      } ],
-      "items": [
-      {
-        "id": 2,
-        "text": "Blood Bowl",
-        "subject": {}
-      },
-      {
-        "id": 1,
-        "text": "Heroes of Newerth",
-        "subject": {}
-      },
-      {
-        "id": 0,
-        "text": "Archon",
-        "subject": {}
-      } ],
-      "answer": [
-        0,
-        2,
-        1
-      ],
-      "type": "ORDPageLike",
-      "kind": "Order"
-      }"""
-
-    assert(parse(question).extract[OrderQuestion] == OrderQuestion(QuestionKind.Order, "ORDPageLike",
-      None, List(SubjectWithId(2, None, None), SubjectWithId(1, None, None), SubjectWithId(0, None, None)), List(0, 2, 1)))
   }
 
   test("Tile") {
@@ -277,7 +232,7 @@ class GameEntitiesTests extends FunSuite {
     implicit val formats = DefaultFormats
 
     val board =
-      """{
+                 """{
                       "userId": "MmYXQ5EKSgdjzP3uJ",
                       "tiles": [
                         {
@@ -336,7 +291,7 @@ class GameEntitiesTests extends FunSuite {
     implicit val formats = DefaultFormats
 
     val game =
-      """{
+              """{
                    "_id": "qS3MNajyD4qd2RYpy",
                    "player1": "MmYXQ5EKSgdjzP3uJ",
                    "player2": "wucQxKHvs5W9Ao9y9",
@@ -504,4 +459,101 @@ class GameEntitiesTests extends FunSuite {
         Move(1, 2), Move(2, 1), Move(2, 2)), 2, 68968294))
 
   }
+
+  test("json from file") {
+    implicit val formats = DefaultFormats + new QuestionSerializer + new SubjectSerializer
+    val stream: InputStream = getClass.getResourceAsStream("/boards.json")
+    val lines = scala.io.Source.fromInputStream(stream).getLines.mkString("\n")
+    val json = parse(lines)
+    assert(json.extract[Game].isInstanceOf[Game])
+  }
+
+  class QuestionSerializer extends CustomSerializer[GameQuestion](implicit formats => ( {
+
+    case JObject(List(JField("choices", JArray(choices)), JField("items", JArray(items)), JField("answer", JArray(answer)),
+    JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
+      OrderQuestion(QuestionKind.Order, tpe.toString, choices.map(c => c.extract[SubjectWithId]), items.map(c => c.extract[Item]),
+        answer.map(a => a.extract[Int]))
+
+    case JObject(List(JField("subject", subject), JField("min", JString(min)), JField("max", JString(max)), JField("default", JString(default)),
+    JField("unit", JString(unit)), JField("step", JInt(step)), JField("threshold", JInt(threshold)), JField("answer", JString(answer)),
+    JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
+      TimelineQuestion(subject.extractOpt[Subject], min, max, default, unit, step.toInt, threshold.toInt, answer, QuestionKind.Timeline, tpe)
+
+    case JObject(List(JField("subject", subject), JField("choices", JArray(choices)), JField("answer", JInt(answer)),
+    JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
+      MultipleChoiceQuestion(QuestionKind.MultipleChoice, tpe, subject.extractOpt[Subject], choices.map(c => c.extract[Possibility]), answer.toInt)
+
+    case JObject(List(JField("subject", subject), JField("range", JDouble(range)), JField("defaultLocation", defaultLocation),
+    JField("answer", answer), JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
+      GeolocationQuestion(subject.extractOpt[Subject], range, defaultLocation.extract[Location], answer.extract[Location], tpe, QuestionKind.Geolocation)
+
+  }, {
+    case OrderQuestion(kind, tpe, items, choices, answer) => JObject(List(JField("kind", JString("Order")),
+      JField("type", JString(tpe)), JField("items", JString(items.toString)), JField("choices", JString(choices.toString())),
+      JField("answer", JArray(answer.map(a => JInt(a))))))
+
+    case MultipleChoiceQuestion(kind, tpe, subject, choices, answer) => JObject(List(JField("subject", JString(subject.toString)),
+      JField("choices", JString(choices.toString())), JField("answer", JInt(answer)),
+      JField("`type`", JString(tpe)), JField("kind", JString("MultipleChoice"))))
+
+    case GeolocationQuestion(subject, range, defaultLocation, answer, tpe, kind) => JObject(List(JField("subject", JString(subject.toString)),
+      JField("range", JDouble(range)), JField("defaultLocation", JString(defaultLocation.toString)),
+      JField("answer", JString(answer.toString)), JField("type", JString(tpe)), JField("kind", JString("Geolocation"))))
+
+    case TimelineQuestion(subject, min, max, default, unit, step, threshold, answer, kind, tpe) => JObject(List(JField("subject", JString(subject.toString)),
+      JField("min", JString(min)), JField("max", JString(max)), JField("default", JString(default)),
+      JField("unit", JString(unit)), JField("step", JInt(step)), JField("threshold", JInt(threshold)), JField("answer", JString(answer)),
+      JField("kind", JString("Timeline")), JField("type", JString(tpe))))
+
+  }))
+
+  class SubjectSerializer extends CustomSerializer[Subject](implicit formats => ( {
+    case JObject(List(JField("name", JString(name)), JField("pageId", JString(pageId)), JField("photoUrl", JString(photoUrl)),
+    JField("type", JString(tpe)))) => PageSubject(name, pageId, Some(photoUrl), SubjectType.PageSubject)
+
+    case JObject(List(JField("comment", JString(comment)), JField("post", post), JField("type", JString(tpe)))) =>
+      CommentSubject(comment, Some(post.extractOpt[Subject].asInstanceOf[PostSubject]), SubjectType.CommentSubject)
+
+    case JObject(List(JField("text", JString(text)), JField("type", JString(tpe)), JField("from", from))) =>
+      TextPostSubject(text, SubjectType.TextPost, from.extractOpt[FBFrom])
+
+    case JObject(List(JField("text", JString(text)), JField("imageUrl", JString(imageUrl)), JField("facebookImageUrl", JString(facebookImageUrl)),
+    JField("type", JString(tpe)), JField("from", from))) =>
+      ImagePostSubject(text, Some(imageUrl), Some(facebookImageUrl), SubjectType.ImagePost, from.extractOpt[FBFrom])
+
+    case JObject(List(JField("text", JString(text)), JField("thumbnailUrl", JString(thumbnailUrl)), JField("url", JString(url)),
+    JField("type", JString(tpe)), JField("from", from))) =>
+      if (tpe.equals("VideoPost"))
+        VideoPostSubject(text, Some(thumbnailUrl), Some(url), SubjectType.VideoPost, from.extractOpt[FBFrom])
+      else
+        LinkPostSubject(text, Some(thumbnailUrl), Some(url), SubjectType.LinkPost, from.extractOpt[FBFrom])
+
+    case JObject(List(JField("text", JString(text)), JField("thumbnailUrl", JString(thumbnailUrl)), JField("url", JString(url)),
+    JField("type", JString(tpe)), JField("from", from))) =>
+      LinkPostSubject(text, Some(thumbnailUrl), Some(url), SubjectType.LinkPost, from.extractOpt[FBFrom])
+
+  }, {
+    case PageSubject(name, pageId, photoUrl, tpe) => JObject(List(JField("name", JString(name)), JField("pageId", JString(pageId)),
+      JField("photoUrl", JString(photoUrl.toString)), JField("type", JString(tpe.toString))))
+
+    case CommentSubject(comment, post, tpe) => JObject(List(JField("comment", JString(comment)),
+      JField("post", JString(post.toString)), JField("type", JString(tpe.toString))))
+
+    case TextPostSubject(text, tpe, from) => JObject(List(JField("text", JString(text)), JField("type", JString(tpe.toString)),
+      JField("from", JString(from.toString))))
+
+    case ImagePostSubject(text, imageUrl, facebookImageUrl, tpe, from) => JObject(List(JField("text", JString(text)),
+      JField("imageUrl", JString(imageUrl.toString)), JField("facebookImageUrl", JString(facebookImageUrl.toString)),
+      JField("type", JString(tpe.toString)), JField("from", JString(from.toString))))
+
+    case LinkPostSubject(text, thumbnailUrl, url, tpe, from) => JObject(List(JField("text", JString(text)),
+      JField("thumbnailUrl", JString(thumbnailUrl.toString)), JField("url", JString(url.toString)),
+      JField("type", JString(tpe.toString)), JField("from", JString(from.toString))))
+
+    case VideoPostSubject(text, thumbnailUrl, url, tpe, from) => JObject(List(JField("text", JString(text)),
+      JField("thumbnailUrl", JString(thumbnailUrl.toString)), JField("url", JString(url.toString)),
+      JField("type", JString(tpe.toString)), JField("from", JString(from.toString))))
+  }))
+
 }
