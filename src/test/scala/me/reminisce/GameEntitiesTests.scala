@@ -2,6 +2,7 @@ package me.reminisce
 
 import java.io.InputStream
 import me.reminisce.server.GameEntities._
+import me.reminisce.server.{SubjectSerializer, QuestionSerializer}
 import org.json4s.JDouble
 import org.json4s.JInt
 import org.json4s.JsonAST.JArray
@@ -467,93 +468,5 @@ class GameEntitiesTests extends FunSuite {
     val json = parse(lines)
     assert(json.extract[Game].isInstanceOf[Game])
   }
-
-  class QuestionSerializer extends CustomSerializer[GameQuestion](implicit formats => ( {
-
-    case JObject(List(JField("choices", JArray(choices)), JField("items", JArray(items)), JField("answer", JArray(answer)),
-    JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
-      OrderQuestion(QuestionKind.Order, tpe.toString, choices.map(c => c.extract[SubjectWithId]), items.map(c => c.extract[Item]),
-        answer.map(a => a.extract[Int]))
-
-    case JObject(List(JField("subject", subject), JField("min", JString(min)), JField("max", JString(max)), JField("default", JString(default)),
-    JField("unit", JString(unit)), JField("step", JInt(step)), JField("threshold", JInt(threshold)), JField("answer", JString(answer)),
-    JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
-      TimelineQuestion(subject.extractOpt[Subject], min, max, default, unit, step.toInt, threshold.toInt, answer, QuestionKind.Timeline, tpe)
-
-    case JObject(List(JField("subject", subject), JField("choices", JArray(choices)), JField("answer", JInt(answer)),
-    JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
-      MultipleChoiceQuestion(QuestionKind.MultipleChoice, tpe, subject.extractOpt[Subject], choices.map(c => c.extract[Possibility]), answer.toInt)
-
-    case JObject(List(JField("subject", subject), JField("range", JDouble(range)), JField("defaultLocation", defaultLocation),
-    JField("answer", answer), JField("type", JString(tpe)), JField("kind", JString(kind)))) =>
-      GeolocationQuestion(subject.extractOpt[Subject], range, defaultLocation.extract[Location], answer.extract[Location], tpe, QuestionKind.Geolocation)
-
-  }, {
-    case OrderQuestion(kind, tpe, items, choices, answer) => JObject(List(JField("kind", JString("Order")),
-      JField("type", JString(tpe)), JField("items", JString(items.toString)), JField("choices", JString(choices.toString())),
-      JField("answer", JArray(answer.map(a => JInt(a))))))
-
-    case MultipleChoiceQuestion(kind, tpe, subject, choices, answer) => JObject(List(JField("subject", JString(subject.toString)),
-      JField("choices", JString(choices.toString())), JField("answer", JInt(answer)),
-      JField("`type`", JString(tpe)), JField("kind", JString("MultipleChoice"))))
-
-    case GeolocationQuestion(subject, range, defaultLocation, answer, tpe, kind) => JObject(List(JField("subject", JString(subject.toString)),
-      JField("range", JDouble(range)), JField("defaultLocation", JString(defaultLocation.toString)),
-      JField("answer", JString(answer.toString)), JField("type", JString(tpe)), JField("kind", JString("Geolocation"))))
-
-    case TimelineQuestion(subject, min, max, default, unit, step, threshold, answer, kind, tpe) => JObject(List(JField("subject", JString(subject.toString)),
-      JField("min", JString(min)), JField("max", JString(max)), JField("default", JString(default)),
-      JField("unit", JString(unit)), JField("step", JInt(step)), JField("threshold", JInt(threshold)), JField("answer", JString(answer)),
-      JField("kind", JString("Timeline")), JField("type", JString(tpe))))
-
-  }))
-
-  class SubjectSerializer extends CustomSerializer[Subject](implicit formats => ( {
-    case JObject(List(JField("name", JString(name)), JField("pageId", JString(pageId)), JField("photoUrl", JString(photoUrl)),
-    JField("type", JString(tpe)))) => PageSubject(name, pageId, Some(photoUrl), SubjectType.PageSubject)
-
-    case JObject(List(JField("comment", JString(comment)), JField("post", post), JField("type", JString(tpe)))) =>
-      CommentSubject(comment, Some(post.extractOpt[Subject].asInstanceOf[PostSubject]), SubjectType.CommentSubject)
-
-    case JObject(List(JField("text", JString(text)), JField("type", JString(tpe)), JField("from", from))) =>
-      TextPostSubject(text, SubjectType.TextPost, from.extractOpt[FBFrom])
-
-    case JObject(List(JField("text", JString(text)), JField("imageUrl", JString(imageUrl)), JField("facebookImageUrl", JString(facebookImageUrl)),
-    JField("type", JString(tpe)), JField("from", from))) =>
-      ImagePostSubject(text, Some(imageUrl), Some(facebookImageUrl), SubjectType.ImagePost, from.extractOpt[FBFrom])
-
-    case JObject(List(JField("text", JString(text)), JField("thumbnailUrl", JString(thumbnailUrl)), JField("url", JString(url)),
-    JField("type", JString(tpe)), JField("from", from))) =>
-      if (tpe.equals("VideoPost"))
-        VideoPostSubject(text, Some(thumbnailUrl), Some(url), SubjectType.VideoPost, from.extractOpt[FBFrom])
-      else
-        LinkPostSubject(text, Some(thumbnailUrl), Some(url), SubjectType.LinkPost, from.extractOpt[FBFrom])
-
-    case JObject(List(JField("text", JString(text)), JField("thumbnailUrl", JString(thumbnailUrl)), JField("url", JString(url)),
-    JField("type", JString(tpe)), JField("from", from))) =>
-      LinkPostSubject(text, Some(thumbnailUrl), Some(url), SubjectType.LinkPost, from.extractOpt[FBFrom])
-
-  }, {
-    case PageSubject(name, pageId, photoUrl, tpe) => JObject(List(JField("name", JString(name)), JField("pageId", JString(pageId)),
-      JField("photoUrl", JString(photoUrl.toString)), JField("type", JString(tpe.toString))))
-
-    case CommentSubject(comment, post, tpe) => JObject(List(JField("comment", JString(comment)),
-      JField("post", JString(post.toString)), JField("type", JString(tpe.toString))))
-
-    case TextPostSubject(text, tpe, from) => JObject(List(JField("text", JString(text)), JField("type", JString(tpe.toString)),
-      JField("from", JString(from.toString))))
-
-    case ImagePostSubject(text, imageUrl, facebookImageUrl, tpe, from) => JObject(List(JField("text", JString(text)),
-      JField("imageUrl", JString(imageUrl.toString)), JField("facebookImageUrl", JString(facebookImageUrl.toString)),
-      JField("type", JString(tpe.toString)), JField("from", JString(from.toString))))
-
-    case LinkPostSubject(text, thumbnailUrl, url, tpe, from) => JObject(List(JField("text", JString(text)),
-      JField("thumbnailUrl", JString(thumbnailUrl.toString)), JField("url", JString(url.toString)),
-      JField("type", JString(tpe.toString)), JField("from", JString(from.toString))))
-
-    case VideoPostSubject(text, thumbnailUrl, url, tpe, from) => JObject(List(JField("text", JString(text)),
-      JField("thumbnailUrl", JString(thumbnailUrl.toString)), JField("url", JString(url.toString)),
-      JField("type", JString(tpe.toString)), JField("from", JString(from.toString))))
-  }))
 
 }
