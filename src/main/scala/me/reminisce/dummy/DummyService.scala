@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object DummyService {
 
  case class Search(username: String) extends RestMessage
- case class Result(username: String, score: Int)
+ case class Result(username: String, score: Double)
 
 
   def props(database: DefaultDB): Props = 
@@ -33,7 +33,6 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
 
 	case Result(username, score) =>
 	log.info(s" $username's score average is: $score")
-	 
-
+	
   }
 }
