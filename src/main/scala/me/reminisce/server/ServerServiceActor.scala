@@ -16,19 +16,10 @@ class ServerServiceActor extends Actor with StatsServiceActor with ActorLogging 
   val mongodbName = ApplicationConfiguration.mongodbName
   val connection: MongoConnection = driver.connection(List(mongoHost))
   
-  override val db: DefaultDB = connection(mongodbName)
-  
+  override val db: DefaultDB = connection(mongodbName)  
 
   override def receive = runRoute(statsRoutes)
   
-
-
-
-  
-
-  
-
-
   /**
     * Cascades the shutdown to the mongo driver.
     */
