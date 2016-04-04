@@ -26,9 +26,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     //FIXME: This should display hello world
     path("hello") {
       get {
-        complete {
-          ???
-        }
+        complete("Hello world")
       }
     }
 
