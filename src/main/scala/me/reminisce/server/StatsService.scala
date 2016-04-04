@@ -44,6 +44,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         complete {
           <h1> Hi guys ! :) </h1>
         }
+
       }
     } ~ path("dbtest"){
       get{
