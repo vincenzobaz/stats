@@ -58,16 +58,16 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         }
 
       }
-    } ~ path("dbtest"){
+    } ~ path("getStatistics"){
       get{
         parameters("username"){
-          (username) =>
+          (userID) =>
            testDB{
-            DummyService.Search(username)
+            DummyService.GetStatistics(userID.toInt)
            }
         }
       }   
-    } ~ path("post"){
+    } ~ path("insertEntity"){
           post{
             entity(as[Game]) {game => {
               insertDB {

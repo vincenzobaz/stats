@@ -9,7 +9,6 @@ import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson._
 import me.reminisce.server.ApplicationConfiguration
 import reactivemongo.bson.{BSONDocument, BSONInteger}
-//import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
 import reactivemongo.core.commands.GetLastError
 import reactivemongo.core.commands._
@@ -126,7 +125,7 @@ import scala.util.{Failure, Success}
         case Success(score) => {
 
           println(s"---- Average scores ----")
-
+/*
           val res: List[AvgScore] = score.elements.take(1).flatMap{
             case (name, value: BSONArray) =>
             value.values.map{case (a: BSONDocument) =>
@@ -142,7 +141,7 @@ import scala.util.{Failure, Success}
               context.parent ! userelem.head.toResultMessage()
             }
             else {context.parent ! AvgScore(null,0).toResultMessage()}
-
+*/
         }
 
         case o => {

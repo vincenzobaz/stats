@@ -18,6 +18,9 @@ object DummyWorker{
 
   case object Done
   case object Abort
+  case object InsertionDone
+  case object ComputationDone
+
 
   def props(database: DefaultDB): Props =
     Props(new DummyWorker(database))
@@ -31,18 +34,8 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     case DummyService.InsertEntity(entity) =>
       insertEntity(entity)
 
-    case DummyService.Search(username) =>
-
-      log.info(s"Worker received a Search message with $username.")
-      dummyQuery(username)
-    
-    case DummyService.Result(username, scores) =>
-      context.parent ! DummyService.Result(username, scores)
-    
-    /* Used for dummy case with User
-    case DummyService.Insert(message) =>
-      dummyInsert(message)
-      */
+    case DummyService.GetStatistics(userID) =>
+      log.info(s"Worker received a Search message with $userID.")
 
     case Done =>
       stop()
@@ -71,19 +64,21 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     
     val dbService = context.actorOf(MongoDatabaseService.props(database))
     dbService ! MongoDatabaseService.Query(username)
+
   }
 
   def dummyInsert(message: Message): Unit = {
-    val dbService = context.actorOf(MongoDatabaseService.props(database))
+/*    val dbService = context.actorOf(MongoDatabaseService.props(database))
 
     message match {
       case u: User =>
         val bson : BSONDocument = UserWriter.write(u)
         dbService ! MongoDatabaseService.Insert(bson)
+        
       case _ => 
         log.info("Unknown Message model -- Killing dbService actor")
         dbService ! PoisonPill
     }
-    
+    */
   }
 }
