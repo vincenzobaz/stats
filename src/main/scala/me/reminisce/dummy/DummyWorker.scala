@@ -11,6 +11,7 @@ import reactivemongo.bson._
 import spray.json._
 import spray.httpx._
 import scala.concurrent.ExecutionContext.Implicits.global
+import me.reminisce.server.GameEntities._
 
 
 object DummyWorker{
@@ -18,16 +19,18 @@ object DummyWorker{
   case object Done
   case object Abort
 
-  def props(database: DefaultDB): Props = 
+  def props(database: DefaultDB): Props =
     Props(new DummyWorker(database))
 }
 
 class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
   import DummyWorker._
   
-
-
   def receive = {
+
+    case DummyService.InsertEntity(entity) =>
+      insertEntity(entity)
+
     case DummyService.Search(username) =>
 
       log.info(s"Worker received a Search message with $username.")
@@ -35,10 +38,15 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     
     case DummyService.Result(username, scores) =>
       context.parent ! DummyService.Result(username, scores)
+    
+    /* Used for dummy case with User
     case DummyService.Insert(message) =>
       dummyInsert(message)
+      */
+
     case Done =>
       stop()
+      //TODO kill the dbservice
   }
 
   def stop(): Unit = {
@@ -46,11 +54,23 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     context.stop(self)
   }
 
+  def insertEntity(entity: EntityMessage): Unit = {
+    
+    entity match {
+      case g: Game =>
+        //val bson = GametoBson(g) 
+        //val dbService = context.actorOf(MongoDatabaseService.props(database))
+        //dbService ! MongoDatabaseService.InsertEntity(bson)
+      case _ =>
+        log.info("unknown entity -- abort")
+        context.parent ! Abort
+    }    
+  }
+
   def dummyQuery(username: String): Unit = {
     
     val dbService = context.actorOf(MongoDatabaseService.props(database))
     dbService ! MongoDatabaseService.Query(username)
-
   }
 
   def dummyInsert(message: Message): Unit = {
@@ -58,9 +78,7 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
 
     message match {
       case u: User =>
-        log.info(s" $u received")
         val bson : BSONDocument = UserWriter.write(u)
-        log.info(s"$bson bson")
         dbService ! MongoDatabaseService.Insert(bson)
       case _ => 
         log.info("Unknown Message model -- Killing dbService actor")

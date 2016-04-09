@@ -3,11 +3,12 @@ package me.reminisce.server
 import me.reminisce.server.GameEntities.QuestionKind.QuestionKind
 import me.reminisce.server.GameEntities.SubjectType.SubjectType
 import me.reminisce.server.domain.RestMessage
-
+import me.reminisce.dummy.DummyService._ 
 
 object GameEntities {
 
-
+  abstract sealed trait EntityMessage
+ 
   case class Game(_id: String,
                   player1: String,
                   player2: String,
@@ -22,7 +23,9 @@ object GameEntities {
                   player2AvailableMoves: List[Move],
                   wonBy: Int,
                   creationTime: Int
-                 )
+                 ) extends EntityMessage {
+    override def toString(): String = s"GAME: players: $player1($player1Scores) vs $player2($player2Scores) : winner: $wonBy"
+   }
 
   case class Board(userId: String, tiles: List[Tile], _id: String) extends RestMessage
 

@@ -50,6 +50,7 @@ import scala.util.{Failure, Success}
 
     case class Query(username: String)
     case class Insert(bson: BSONDocument)
+    case class InsertEntity(bson: BSONDocument)
 
 
 
@@ -81,7 +82,6 @@ import scala.util.{Failure, Success}
           context.parent ! DummyWorker.Done
         }
       }
-
     }
 
     def avgQuery(username: String){

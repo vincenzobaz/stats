@@ -11,6 +11,11 @@ import spray.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
 import reactivemongo.api.DefaultDB
+import me.reminisce.server.GameEntities._
+import me.reminisce.server.jsonserializer.StatsFormatter
+import org.json4s.Formats
+import org.json4s.DefaultFormats
+import spray.httpx.Json4sSupport
 
 object StatsService
 
@@ -27,6 +32,10 @@ object UserJsonSupport extends DefaultJsonProtocol with SprayJsonSupport{
   implicit val PortoFolioFormats = jsonFormat3(User)
 }
 
+object GameFormat extends Json4sSupport with StatsFormatter{
+
+}
+
 /**
   * Defines a GameCreatorService with the handled routes.
   */
@@ -34,11 +43,14 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   def actorRefFactory: ActorContext
 
   val db: DefaultDB
+  //val json4sFormats: Formats
+  
   
   val statsRoutes = {
 
-    import UserJsonSupport._
-   
+    //import UserJsonSupport._
+    import GameFormat._
+
     path("hello") {
       get {
         complete {
@@ -55,14 +67,14 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
            }
         }
       }   
-    } ~ path("post"){ 
-          post{           
-            entity(as[User]) {user => {
+    } ~ path("post"){
+          post{
+            entity(as[Game]) {game => {
               insertDB {
-                DummyService.Insert(user)
-              }              
-            }
-          }             
+                DummyService.InsertEntity(game)
+              }
+            } 
+          }
         }
     }
   }
@@ -71,7 +83,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     
     val dummyService = context.actorOf(DummyService.props(db))
     ctx => perRequest(ctx, dummyService, message)
-  }  
+  }
 
   private def insertDB(message: RestMessage) : Route = {
   
