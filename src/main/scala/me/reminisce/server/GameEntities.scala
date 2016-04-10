@@ -58,21 +58,22 @@ object GameEntities {
     val ImagePost = Value("ImagePost")
     val VideoPost = Value("VideoPost")
     val LinkPost = Value("LinkPost")
-    val CommentSubject = Value("Comment")    
+    val CommentSubject = Value("Comment")
+
   }
   //TO TEST
-  implicit object SubectTypeWriter extends BSONWriter[SubjectType, BSONString] {
+  implicit object SubjectTypeWriter extends BSONWriter[SubjectType, BSONString] {
     def write(t: SubjectType): BSONString = BSONString(t.toString)
   }
-   implicit object SubectTypeReader extends BSONReader[SubjectType, BSONString] {
+   implicit object SubjectTypeReader extends BSONReader[BSONValue, SubjectType] {
     def read(bson: BSONValue): SubjectType = bson match {
-    case BSONString(s) => SubjectType.withName(s)
-    }
+       case BSONString(s) => SubjectType.withName(s)
+     }
   }
    implicit object QuestionKindWriter extends BSONWriter[QuestionKind, BSONString] {
     def write(t: QuestionKind): BSONString = BSONString(t.toString)
   }
-   implicit object QuestionKindReader extends BSONReader[QuestionKind, BSONString] {
+   implicit object QuestionKindReader extends BSONReader[BSONValue, QuestionKind] {
     def read(bson: BSONValue): QuestionKind = bson match {
     case BSONString(s) => QuestionKind.withName(s)
     }
@@ -170,28 +171,53 @@ object GameEntities {
 
 // Generate implicit BSONWriter and BSONreader
 
-  implicit val MultiChoiceQHandler = Macros.handler[MultipleChoiceQuestion]
-  implicit val timelineQHandler = Macros.handler[TimelineQuestion]
-  implicit val orderQHandler = Macros.handler[OrderQuestion]
-  implicit val subjectIDHandler = Macros.handler[SubjectWithId]
-  implicit val itemHandler = Macros.handler[Item]
-  implicit val possibilityHandler = Macros.handler[Possibility]
-  implicit val geoLocationHandler = Macros.handler[GeolocationQuestion]
-  implicit val locationHandler = Macros.handler[Location]
+
+  implicit object SubjectWriter extends BSONDocumentWriter[Subject] {
+    def write(subject: Subject): BSONDocument =
+      subject match {
+        case PageSubject(name, pageId, photoUrl, t) => BSONDocument(
+          "name" -> name,
+          "photoUrl" -> photoUrl,
+          "type" -> t
+        )
+      }
+  }
+
+  implicit object SubjectReader extends BSONDocumentReader[Subject] {
+    def read(doc: BSONDocument): Subject =
+      SubjectType.withName(doc.getAs[String]("type").get) match {
+        case SubjectType.PageSubject => 
+          val name = doc.getAs[String]("name").get
+          val pageId = doc.getAs[String]("pageId").get
+          val photoUrl = doc.getAs[String]("photoUrl")
+          PageSubject(name, pageId, photoUrl)
+      }
+      PageSubject("", "", Some(""), SubjectType.PageSubject)
+  }
   
 
-  implicit val txtPostHandler = Macros.handler[TextPostSubject]
-  implicit val imgPostHandler = Macros.handler[ImagePostSubject]
-  implicit val videoPostHandler = Macros.handler[VideoPostSubject]
-  implicit val linkPostHandler = Macros.handler[LinkPostSubject]
-  implicit val commentPostHandler = Macros.handler[CommentSubject]
-  implicit val FBFromHandler = Macros.handler[FBFrom]
-
-  implicit val scoreHandler = Macros.handler[Score]
-  implicit val moveHandler = Macros.handler[Move]
+  implicit val MultiChoiceQHandler: BSONHandler[BSONDocument, MultipleChoiceQuestion] = Macros.handler[MultipleChoiceQuestion]
+  implicit val timelineQHandler: BSONHandler[BSONDocument, TimelineQuestion] = Macros.handler[TimelineQuestion]
+  implicit val orderQHandler: BSONHandler[BSONDocument, OrderQuestion] = Macros.handler[OrderQuestion]
+  implicit val subjectIDHandler: BSONHandler[BSONDocument, SubjectWithId] = Macros.handler[SubjectWithId]
+  implicit val itemHandler: BSONHandler[BSONDocument, Item] = Macros.handler[Item]
+  implicit val possibilityHandler: BSONHandler[BSONDocument, Possibility] = Macros.handler[Possibility]
+  implicit val geoLocationHandler: BSONHandler[BSONDocument, GeolocationQuestion] = Macros.handler[GeolocationQuestion]
+  implicit val locationHandler: BSONHandler[BSONDocument, Location] = Macros.handler[Location]
   
-  implicit val tileHandler = Macros.handler[Tile]
-  implicit val boardHandler = Macros.handler[Board]
-  implicit val gameHandler = Macros.handler[Game]
+
+  implicit val txtPostHandler: BSONHandler[BSONDocument, TextPostSubject] = Macros.handler[TextPostSubject]
+  implicit val imgPostHandler: BSONHandler[BSONDocument, ImagePostSubject] = Macros.handler[ImagePostSubject]
+  implicit val videoPostHandler: BSONHandler[BSONDocument, VideoPostSubject] = Macros.handler[VideoPostSubject]
+  implicit val linkPostHandler: BSONHandler[BSONDocument, LinkPostSubject] = Macros.handler[LinkPostSubject]
+//  implicit val commentPostHandler: BSONHandler[BSONDocument, CommentSubject] = Macros.handler[CommentSubject]
+  implicit val FBFromHandler: BSONHandler[BSONDocument, FBFrom] = Macros.handler[FBFrom]
+
+  implicit val scoreHandler: BSONHandler[BSONDocument, Score] = Macros.handler[Score]
+  implicit val moveHandler: BSONHandler[BSONDocument, Score] = Macros.handler[Score]
+  
+//  implicit val tileHandler: BSONHandler[BSONDocument, Tile] = Macros.handler[Tile]
+//  implicit val boardHandler: BSONHandler[BSONDocument, Board] = Macros.handler[Board]
+//  implicit val gameHandler: BSONHandler[BSONDocument, Game] = Macros.handler[Game]
   
 }
