@@ -43,9 +43,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   def actorRefFactory: ActorContext
 
   val db: DefaultDB
-  //val json4sFormats: Formats
-  
-  
+
   val statsRoutes = {
 
     //import UserJsonSupport._
@@ -62,21 +60,22 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
       get{
         parameters("username"){
           (userID) =>
-           testDB{
-            DummyService.GetStatistics(userID.toInt)
-           }
+            testDB{
+              DummyService.GetStatistics(userID.toInt)
+            }
         }
       }   
     } ~ path("insertEntity"){
           post{
-            entity(as[Game]) {game => {
-              insertDB {
-                DummyService.InsertEntity(game)
-              }
-            } 
+            entity(as[Game]) {
+              game => {
+                insertDB {
+                  DummyService.InsertEntity(game)
+               }
+              } 
+            }
           }
         }
-    }
   }
     
   private def testDB(message: RestMessage): Route = {
