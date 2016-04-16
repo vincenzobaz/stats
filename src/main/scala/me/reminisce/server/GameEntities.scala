@@ -40,8 +40,6 @@ object GameEntities {
     answered: Boolean,
     disabled: Boolean) extends RestMessage
 
-  
-
   object QuestionKind extends Enumeration {
     type QuestionKind = Value
     val MultipleChoice = Value("MultipleChoice")
@@ -59,32 +57,11 @@ object GameEntities {
     val VideoPost = Value("VideoPost")
     val LinkPost = Value("LinkPost")
     val CommentSubject = Value("Comment")
-
-  }
-  //TO TEST
-  implicit object SubjectTypeWriter extends BSONWriter[SubjectType, BSONString] {
-    def write(t: SubjectType): BSONString = BSONString(t.toString)
-  }
-  implicit object SubjectTypeReader extends BSONReader[BSONValue, SubjectType] {
-    def read(bson: BSONValue): SubjectType = bson match {
-     case BSONString(s) => SubjectType.withName(s)
-    }
-  }
-
-  implicit object QuestionKindWriter extends BSONWriter[QuestionKind, BSONString] {
-    def write(t: QuestionKind): BSONString = BSONString(t.toString)
-  }
-
-  implicit object QuestionKindReader extends BSONReader[BSONValue, QuestionKind] {
-    def read(bson: BSONValue): QuestionKind = bson match {
-      case BSONString(s) => QuestionKind.withName(s)
-    }
   }
 
   case class Move(row: Int, column: Int)
 
   case class Score(player: Int, score: Int)
-
 
 /**
   * Abstract subject, a subject represents a facebook item
@@ -168,7 +145,27 @@ object GameEntities {
 
   case class Location(latitude: Double, longitude: Double)
 
-// Generate implicit BSONWriter and BSONreader
+// implicit BSONWriter and BSONreader
+
+  implicit object SubjectTypeWriter extends BSONWriter[SubjectType, BSONString] {
+    def write(t: SubjectType): BSONString = BSONString(t.toString)
+  }
+  implicit object SubjectTypeReader extends BSONReader[BSONValue, SubjectType] {
+    def read(bson: BSONValue): SubjectType = bson match {
+     case BSONString(s) => SubjectType.withName(s)
+    }
+  }
+
+  implicit object QuestionKindWriter extends BSONWriter[QuestionKind, BSONString] {
+    def write(t: QuestionKind): BSONString = BSONString(t.toString)
+  }
+
+  implicit object QuestionKindReader extends BSONReader[BSONValue, QuestionKind] {
+    def read(bson: BSONValue): QuestionKind = bson match {
+      case BSONString(s) => QuestionKind.withName(s)
+    }
+  }
+
 
   implicit val possibilityHandler: BSONHandler[BSONDocument, Possibility] = Macros.handler[Possibility]
   implicit val locationHandler: BSONHandler[BSONDocument, Location] = Macros.handler[Location]
@@ -213,27 +210,27 @@ object GameEntities {
     def read(doc: BSONDocument): PostSubject =
     SubjectType.withName(doc.getAs[String]("type").get) match {
       case SubjectType.TextPost => 
-      val text = doc.getAs[String]("text").get
-      val from = doc.getAs[FBFrom]("from")
-      TextPostSubject(text, from = from) 
+        val text = doc.getAs[String]("text").get
+        val from = doc.getAs[FBFrom]("from")
+        TextPostSubject(text, from = from) 
       case SubjectType.ImagePost => 
-      val text = doc.getAs[String]("text").get
-      val imageUrl = doc.getAs[String]("imageUrl")
-      val fbUrl = doc.getAs[String]("facebookImageUrl")
-      val from = doc.getAs[FBFrom]("from")
-      ImagePostSubject(text, imageUrl, fbUrl, from = from)
+        val text = doc.getAs[String]("text").get
+        val imageUrl = doc.getAs[String]("imageUrl")
+        val fbUrl = doc.getAs[String]("facebookImageUrl")
+        val from = doc.getAs[FBFrom]("from")
+        ImagePostSubject(text, imageUrl, fbUrl, from = from)
       case SubjectType.VideoPost => 
-      val text = doc.getAs[String]("text").get
-      val thumbnailUrl = doc.getAs[String]("thumbnailUrl")
-      val url = doc.getAs[String]("url")
-      val from = doc.getAs[FBFrom]("facebookImageUrl")
-      VideoPostSubject(text, thumbnailUrl, url, from = from)
+        val text = doc.getAs[String]("text").get
+        val thumbnailUrl = doc.getAs[String]("thumbnailUrl")
+        val url = doc.getAs[String]("url")
+        val from = doc.getAs[FBFrom]("facebookImageUrl")
+        VideoPostSubject(text, thumbnailUrl, url, from = from)
       case SubjectType.LinkPost=>
-      val text = doc.getAs[String]("text").get
-      val thumbnailUrl = doc.getAs[String]("thumbnailUrl")
-      val url = doc.getAs[String]("url")          
-      val from = doc.getAs[FBFrom]("facebookImageUrl")
-      LinkPostSubject(text, thumbnailUrl, url, from = from)
+        val text = doc.getAs[String]("text").get
+        val thumbnailUrl = doc.getAs[String]("thumbnailUrl")
+        val url = doc.getAs[String]("url")          
+        val from = doc.getAs[FBFrom]("facebookImageUrl")
+        LinkPostSubject(text, thumbnailUrl, url, from = from)
     }
   }
 
