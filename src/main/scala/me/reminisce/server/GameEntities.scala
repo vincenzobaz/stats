@@ -146,6 +146,7 @@ object GameEntities {
   case class Location(latitude: Double, longitude: Double)
 
 // implicit BSONWriter and BSONreader
+ 
 
   implicit object SubjectTypeWriter extends BSONWriter[SubjectType, BSONString] {
     def write(t: SubjectType): BSONString = BSONString(t.toString)
@@ -155,7 +156,7 @@ object GameEntities {
      case BSONString(s) => SubjectType.withName(s)
     }
   }
-
+  
   implicit object QuestionKindWriter extends BSONWriter[QuestionKind, BSONString] {
     def write(t: QuestionKind): BSONString = BSONString(t.toString)
   }
@@ -167,13 +168,8 @@ object GameEntities {
   }
 
 
-  implicit val possibilityHandler: BSONHandler[BSONDocument, Possibility] = Macros.handler[Possibility]
-  implicit val locationHandler: BSONHandler[BSONDocument, Location] = Macros.handler[Location]
-  implicit val FBFromHandler: BSONHandler[BSONDocument, FBFrom] = Macros.handler[FBFrom]
-  implicit val scoreHandler: BSONHandler[BSONDocument, Score] = Macros.handler[Score]
-  implicit val moveHandler: BSONHandler[BSONDocument, Move] = Macros.handler[Move]
 
-
+/*
   implicit object PostSubjectWriter extends BSONDocumentWriter[PostSubject] {
     def write(postSubject: PostSubject): BSONDocument =
     postSubject match {
@@ -267,6 +263,23 @@ object GameEntities {
       case ps: PostSubject => PostSubjectWriter.write(ps)
     }
   }
+  */
+
+  implicit val possibilityHandler: BSONHandler[BSONDocument, Possibility] = Macros.handler[Possibility]
+  implicit val locationHandler: BSONHandler[BSONDocument, Location] = Macros.handler[Location]
+  implicit val FBFromHandler: BSONHandler[BSONDocument, FBFrom] = Macros.handler[FBFrom]
+  implicit val scoreHandler: BSONHandler[BSONDocument, Score] = Macros.handler[Score]
+  implicit val moveHandler: BSONHandler[BSONDocument, Move] = Macros.handler[Move]
+
+  
+  implicit val pageSubjectHandler: BSONHandler[BSONDocument, PageSubject] = Macros.handler[PageSubject]
+  implicit val commentSubjectHandler: BSONHandler[BSONDocument, CommentSubject] = Macros.handler[CommentSubject]
+  implicit val TextPostSubjectHandler: BSONHandler[BSONDocument, TextPostSubject] = Macros.handler[TextPostSubject]
+  implicit val ImagePostSubjectHandler: BSONHandler[BSONDocument, ImagePostSubject] = Macros.handler[ImagePostSubject]
+  implicit val VideoPostSubjectHandler: BSONHandler[BSONDocument, VideoPostSubject] = Macros.handler[VideoPostSubject]
+  implicit val LinkPostSubjectHandler: BSONHandler[BSONDocument, LinkPostSubject] = Macros.handler[LinkPostSubject]
+
+  
 
   implicit object GameQuestionWriter extends BSONDocumentWriter[GameQuestion] {
     def write(question: GameQuestion): BSONDocument =
@@ -344,41 +357,13 @@ object GameEntities {
           GeolocationQuestion(subject, range, defaultLocation, answer, `t`, QuestionKind.Geolocation)
       }    
   }
-
+ 
   implicit val itemHandler: BSONHandler[BSONDocument, Item] = Macros.handler[Item]
   implicit val subjectIDHandler: BSONHandler[BSONDocument, SubjectWithId] = Macros.handler[SubjectWithId]
   implicit val tileHandler: BSONHandler[BSONDocument, Tile] = Macros.handler[Tile]
   implicit val boardHandler: BSONHandler[BSONDocument, Board] = Macros.handler[Board]
 
-  implicit object GameReader extends BSONDocumentReader[Game] {
-    def read(doc: BSONDocument) : Game = {
-      val id = doc.getAs[String]("_id").get
-      val player1 = doc.getAs[String]("player1").get
-      val player2 = doc.getAs[String]("player2").get
-      val player1Board = doc.getAs[Board]("player1Board").get
-      val player2Board = doc.getAs[Board]("player2Board").get
-      val status = doc.getAs[String]("String").get
-      val playerTurn = doc.getAs[Int]("playerTurn").get
-      val player1Scores = doc.getAs[Int]("player1Scores").get
-      val player2Scores = doc.getAs[Int]("player2Scores").get
-      val boardState = doc.getAs[List[List[Score]]]("boardState").get
-      val player1AvailableMoves = doc.getAs[List[Move]]("player1AvailableMoves").get
-      val player2AvailableMoves = doc.getAs[List[Move]]("player2AvailableMoves").get
-      val wonBy = doc.getAs[Int]("wonBy").get
-      val creationTime = doc.getAs[Int]("creationTime").get
-      Game(id, 
-        player1, player2, 
-        player1Board, player2Board, 
-        status, 
-        playerTurn, 
-        player1Scores, player2Scores,
-        boardState,
-        player1AvailableMoves, player2AvailableMoves,
-        wonBy,
-        creationTime)
-    }
-  }
-  implicit object GameWriter extends BSONDocumentWriter[Game] {
+implicit object GameWriter extends BSONDocumentWriter[Game] {
     def write(game: Game) : BSONDocument = {
       val Game(id, 
         player1, player2, 
@@ -408,4 +393,34 @@ object GameEntities {
         )
     }
   }
+ implicit object GameReader extends BSONDocumentReader[Game] {
+    def read(doc: BSONDocument) : Game = {
+      val id = doc.getAs[String]("_id").get
+      val player1 = doc.getAs[String]("player1").get
+      val player2 = doc.getAs[String]("player2").get
+      val player1Board = doc.getAs[Board]("player1Board").get
+      val player2Board = doc.getAs[Board]("player2Board").get
+      val status = doc.getAs[String]("String").get
+      val playerTurn = doc.getAs[Int]("playerTurn").get
+      val player1Scores = doc.getAs[Int]("player1Scores").get
+      val player2Scores = doc.getAs[Int]("player2Scores").get
+      val boardState = doc.getAs[List[List[Score]]]("boardState").get
+      val player1AvailableMoves = doc.getAs[List[Move]]("player1AvailableMoves").get
+      val player2AvailableMoves = doc.getAs[List[Move]]("player2AvailableMoves").get
+      val wonBy = doc.getAs[Int]("wonBy").get
+      val creationTime = doc.getAs[Int]("creationTime").get
+      Game(id, 
+        player1, player2, 
+        player1Board, player2Board, 
+        status, 
+        playerTurn, 
+        player1Scores, player2Scores,
+        boardState,
+        player1AvailableMoves, player2AvailableMoves,
+        wonBy,
+        creationTime)
+    }
+  }
+  
+
 }

@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import me.reminisce.server.GameEntities._
 import reactivemongo.bson._
 
+
 class BSONSerializersTest extends FunSuite {
 
   // ***** MOVE *****
@@ -104,8 +105,8 @@ class BSONSerializersTest extends FunSuite {
 
 //TODO: Why it doesn't work with BSON.writeDocument ?
   test("PageSubjectWrite") {
-    val bson = SubjectWriter.write(pageSubject)
-    //val bson = BSON.writeDocument(pageSubject)
+   // val bson = SubjectWriter.write(pageSubject)
+    val bson = BSON.writeDocument[PageSubject](pageSubject)
     assert(bson == docPageSubject)
   }
   test("PageSubjectRead") {    
@@ -186,7 +187,7 @@ class BSONSerializersTest extends FunSuite {
   val docTile = BSONDocument(
     "type" -> SubjectType.PageSubject,
     "_id" -> "id12345",
-    "question1" -> GameQuestionReader.read(docGeoLocationQuestion),
+    "question1" -> geoLocationQuestion, //GameQuestionReader.read(docGeoLocationQuestion),
     "question2" -> GameQuestionReader.read(docGeoLocationQuestion),
     "question3" -> GameQuestionReader.read(docGeoLocationQuestion),
     "score" -> 2341,
@@ -201,5 +202,20 @@ class BSONSerializersTest extends FunSuite {
     Some(geoLocationQuestion),
     2341, true, false
     )
+  test("TileWrite") {
+    val bson = BSON.writeDocument(tile)
+    assert(bson == docTile)
+  }
+
+  test("TileRead") {    
+    val result = docTile.as[Tile]
+    assert(result == tile)
+  }
+
+  test("TileWriteRead"){
+    val bson = BSON.writeDocument(docTile)
+    val result = bson.as[Tile]
+    assert(tile == result)
+  }  
 
 }
