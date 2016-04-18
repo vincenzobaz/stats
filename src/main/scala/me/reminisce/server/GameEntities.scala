@@ -169,7 +169,7 @@ object GameEntities {
 
 
 
-/*
+
   implicit object PostSubjectWriter extends BSONDocumentWriter[PostSubject] {
     def write(postSubject: PostSubject): BSONDocument =
     postSubject match {
@@ -263,7 +263,7 @@ object GameEntities {
       case ps: PostSubject => PostSubjectWriter.write(ps)
     }
   }
-  */
+  
 
   implicit val possibilityHandler: BSONHandler[BSONDocument, Possibility] = Macros.handler[Possibility]
   implicit val locationHandler: BSONHandler[BSONDocument, Location] = Macros.handler[Location]
@@ -271,7 +271,8 @@ object GameEntities {
   implicit val scoreHandler: BSONHandler[BSONDocument, Score] = Macros.handler[Score]
   implicit val moveHandler: BSONHandler[BSONDocument, Move] = Macros.handler[Move]
 
-  
+  implicit val geolocationQuestionHandler: BSONHandler[BSONDocument, GeolocationQuestion] = Macros.handler[GeolocationQuestion]
+
   implicit val pageSubjectHandler: BSONHandler[BSONDocument, PageSubject] = Macros.handler[PageSubject]
   implicit val commentSubjectHandler: BSONHandler[BSONDocument, CommentSubject] = Macros.handler[CommentSubject]
   implicit val TextPostSubjectHandler: BSONHandler[BSONDocument, TextPostSubject] = Macros.handler[TextPostSubject]

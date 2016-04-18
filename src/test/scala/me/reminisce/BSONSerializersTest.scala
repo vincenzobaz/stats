@@ -109,113 +109,116 @@ class BSONSerializersTest extends FunSuite {
     val bson = BSON.writeDocument[PageSubject](pageSubject)
     assert(bson == docPageSubject)
   }
+
   test("PageSubjectRead") {    
-    val result = SubjectReader.read(docPageSubject)
-    //val result = docPageSubject.as[PageSubject]
+//    val result = SubjectReader.read(docPageSubject)
+    val result = docPageSubject.as[PageSubject]
     assert(result == pageSubject)
   }
-  test("PageSubjectWriteRead"){
-    val bson = SubjectWriter.write(pageSubject)
-    val result = SubjectReader.read(bson)
-    //val bson = BSON.writeDocument(pageSubject)
-    //val result = bson.as[Subject]
-    assert(pageSubject == result)
-  }  
-
-  // ***** SUBJECTWITHID ****
-  val docSubjectWithID = BSONDocument(
-    "uId" -> 12830,
-    "subject" -> SubjectWriter.write(pageSubject)
-    )
-  val subjectWithID = SubjectWithId(12830, Some(pageSubject))
   
-  test("SubjectWithIDWrite") {
-    val bson = BSON.writeDocument(subjectWithID)
-    assert(bson == docSubjectWithID)
-  }
+test("PageSubjectWriteRead"){
+  val bson = SubjectWriter.write(pageSubject)
+  val result = SubjectReader.read(bson)
+  //val bson = BSON.writeDocument(pageSubject)
+  //val result = bson.as[Subject]
+  assert(pageSubject == result)
+}  
 
-  test("SubjectWithIDRead") {    
-    val result = docSubjectWithID.as[SubjectWithId]
-    assert(result == subjectWithID)
-  }
+// ***** SUBJECTWITHID ****
+val docSubjectWithID = BSONDocument(
+  "uId" -> 12830,
+  "subject" -> SubjectWriter.write(pageSubject)
+  )
+val subjectWithID = SubjectWithId(12830, Some(pageSubject))
 
-  test("SubjectWithIDWriteRead"){
-    val bson = BSON.writeDocument(subjectWithID)
-    val result = bson.as[SubjectWithId]
-    assert(subjectWithID == result)
-  }  
+test("SubjectWithIDWrite") {
+  val bson = BSON.writeDocument(subjectWithID)
+  assert(bson == docSubjectWithID)
+}
 
-  // ***** GEOLOCATIONQUESTION *****
-  val docGeoLocationQuestion = BSONDocument(
-    "subject" -> SubjectWriter.write(pageSubject),
-    "range" -> 0.2,
-    "defaultLocation" -> location,
-    "answer" -> location,
-    "type" -> SubjectType.PageSubject,
-    "kind" -> QuestionKind.Geolocation
-    )
-  val geoLocationQuestion = GeolocationQuestion(
-    Some(pageSubject), 
-    0.2, 
-    location, 
-    location, 
-    SubjectType.PageSubject.toString,
-    QuestionKind.Geolocation
-    )
+test("SubjectWithIDRead") {    
+  val result = docSubjectWithID.as[SubjectWithId]
+  assert(result == subjectWithID)
+}
 
-  test("GeolocationQuestionWrite") {
-    //val bson = BSON.writeDocument(geoLocationQuestion)
-    val bson = GameQuestionWriter.write(geoLocationQuestion)
-    assert(bson == docGeoLocationQuestion)
-  }
+test("SubjectWithIDWriteRead"){
+  val bson = BSON.writeDocument(subjectWithID)
+  val result = bson.as[SubjectWithId]
+  assert(subjectWithID == result)
+}  
 
-  test("GeolocationQuestionRead") {    
-    val result = GameQuestionReader.read(docGeoLocationQuestion)
-    //val result = docGeoLocationQuestion.as[GeolocationQuestion]
-    assert(result == geoLocationQuestion)
-  }
+// ***** GEOLOCATIONQUESTION *****
+val docGeoLocationQuestion = BSONDocument(
+  "subject" -> SubjectWriter.write(pageSubject),
+  "range" -> 0.2,
+  "defaultLocation" -> location,
+  "answer" -> location,
+  "type" -> SubjectType.PageSubject,
+  "kind" -> QuestionKind.Geolocation
+  )
+val geoLocationQuestion = GeolocationQuestion(
+  Some(pageSubject), 
+  0.2, 
+  location, 
+  location, 
+  SubjectType.PageSubject.toString,
+  QuestionKind.Geolocation
+  )
 
-  test("GeolocationQuestionWriteRead"){
-    val bson = GameQuestionWriter.write(geoLocationQuestion)
-    val result = GameQuestionReader.read(bson)
-   // val bson = BSON.writeDocument(geoLocationQuestion)
-   // val result = bson.as[GeolocationQuestion]
-    assert(geoLocationQuestion == result)
-  }  
+test("GeolocationQuestionWrite") {
+  val bson = BSON.writeDocument(geoLocationQuestion)
+//  val bson = GameQuestionWriter.write(geoLocationQuestion)
+  assert(bson == docGeoLocationQuestion)
+}
 
-  // ***** TILE *****
-  val docTile = BSONDocument(
-    "type" -> SubjectType.PageSubject,
-    "_id" -> "id12345",
-    "question1" -> geoLocationQuestion, //GameQuestionReader.read(docGeoLocationQuestion),
-    "question2" -> GameQuestionReader.read(docGeoLocationQuestion),
-    "question3" -> GameQuestionReader.read(docGeoLocationQuestion),
-    "score" -> 2341,
-    "answered" -> true, 
-    "disabled" -> false
-    )
-  val tile = Tile(
-    SubjectType.PageSubject.toString, 
-    "id12345", 
-    Some(geoLocationQuestion),
-    Some(geoLocationQuestion),
-    Some(geoLocationQuestion),
-    2341, true, false
-    )
-  test("TileWrite") {
-    val bson = BSON.writeDocument(tile)
-    assert(bson == docTile)
-  }
+test("GeolocationQuestionRead") {    
+//  val result = GameQuestionReader.read(docGeoLocationQuestion)
+  val result = docGeoLocationQuestion.as[GeolocationQuestion]
+  assert(result == geoLocationQuestion)
+}
 
-  test("TileRead") {    
-    val result = docTile.as[Tile]
-    assert(result == tile)
-  }
+test("GeolocationQuestionWriteRead"){
+//  val bson = GameQuestionWriter.write(geoLocationQuestion)
+//  val result = GameQuestionReader.read(bson)
+  val bson = BSON.writeDocument(geoLocationQuestion)
+  val result = bson.as[GeolocationQuestion]
+  assert(geoLocationQuestion == result)
+}  
 
-  test("TileWriteRead"){
-    val bson = BSON.writeDocument(docTile)
-    val result = bson.as[Tile]
-    assert(tile == result)
-  }  
+// ***** TILE *****
+  
+val docTile = BSONDocument(
+  "type" -> SubjectType.PageSubject,
+  "_id" -> "id12345",
+  "question1" -> BSON.write(geoLocationQuestion), 
+  "question2" -> docGeoLocationQuestion,
+  "question3" -> docGeoLocationQuestion,
+  "score" -> 2341,
+  "answered" -> true, 
+  "disabled" -> false
+  )
+val tile = Tile(
+  SubjectType.PageSubject.toString(), 
+  "id12345", 
+  Some(geoLocationQuestion),
+  Some(geoLocationQuestion),
+  Some(geoLocationQuestion),
+  2341, true, false
+  )
+test("TileWrite") {
+  val bson = BSON.writeDocument(tile)
+  assert(bson == docTile)
+}
+
+test("TileRead") {    
+  val result = docTile.as[Tile]
+  assert(result == tile)
+}
+
+test("TileWriteRead"){
+  val bson = BSON.writeDocument(docTile)
+  val result = bson.as[Tile]
+  assert(tile == result)
+}  
 
 }
