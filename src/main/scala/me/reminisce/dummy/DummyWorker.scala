@@ -1,7 +1,6 @@
 package me.reminisce.dummy
 
 import akka.actor._
-import com.github.nscala_time.time.Imports._
 import me.reminisce.database._
 import me.reminisce.database.MongoDBEntities._
 import reactivemongo.api.DefaultDB
@@ -51,9 +50,9 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     
     entity match {
       case g: Game =>
-        //val bson = GametoBson(g) 
-        //val dbService = context.actorOf(MongoDatabaseService.props(database))
-        //dbService ! MongoDatabaseService.InsertEntity(bson)
+
+        val dbService = context.actorOf(MongoDatabaseService.props(database))
+        dbService ! MongoDatabaseService.InsertEntity(g, "games")
       case _ =>
         log.info("unknown entity -- abort")
         context.parent ! Abort

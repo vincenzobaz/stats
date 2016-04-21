@@ -1,23 +1,23 @@
 package me.reminisce.database
 
 import akka.actor.Props
-import com.github.nscala_time.time.Imports._
+import me.reminisce.server.GameEntities._
 import me.reminisce.database.MongoDatabaseService._
 import me.reminisce.database.MongoDBEntities._
+import me.reminisce.server.ApplicationConfiguration
 import me.reminisce.dummy._
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson._
-import me.reminisce.server.ApplicationConfiguration
 import reactivemongo.bson.{BSONDocument, BSONInteger}
 import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
 import reactivemongo.core.commands.GetLastError
 import reactivemongo.core.commands._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import scala.concurrent.{ ExecutionContext, Future }
 import reactivemongo.api._
 import reactivemongo.bson._
-import scala.concurrent.Future
+
 import scala.util.{Failure, Success}
 
 
@@ -31,6 +31,8 @@ import scala.util.{Failure, Success}
     */
     val usersCollection = "users"
     val scoresCollection = "scores"
+    val cacheCollection = "cachedStats"
+    val statsCollection = "games"
 
 
   /**
@@ -49,7 +51,7 @@ import scala.util.{Failure, Success}
 
     case class Query(username: String)
     case class Insert(bson: BSONDocument)
-    case class InsertEntity(bson: BSONDocument)
+    case class InsertEntity(entity: EntityMessage, collection: String)
 
 
 
@@ -58,29 +60,34 @@ import scala.util.{Failure, Success}
   class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
 
     import MongoDatabaseService._
+    import me.reminisce.server.GameEntities._
+
 
     def receive = {
 
       case Query(username) =>
-      avgQuery(username)
-      
-      case Insert(bson) =>
-      insertInDb(bson, "test") //TODO: one collection for GameBoard
+        avgQuery(username)
+    //  case Insert(bson) =>
+    //    insertInDb(bson, "test") //TODO: one collection for GameBoard
+      case InsertEntity(entity, collection) =>
+        insertInDb(entity, collection)
     }
 
+    def insertInDb(entity: EntityMessage, collection: String){
+      entity match{
+        case g: Game =>
+          val col = db[BSONCollection](collection)   
+          val future = col.insert(g)
 
-    def insertInDb(bson: BSONDocument, collection: String){
-
-      val col = db[BSONCollection](collection)   
-      val future = col.insert(bson)
-
-      future.onComplete {
-        case Failure(e) => throw e
-        case Success(lastError) => {
-          log.info("successfully inserted document with lastError = " + lastError)
-          context.parent ! DummyWorker.Done
+          future.onComplete {
+            case Failure(e) => throw e
+            case Success(lastError) => {
+              log.info("successfully inserted document with lastError = " + lastError)
+              context.parent ! DummyWorker.Done
         }
       }
+      }
+
     }
 
     def avgQuery(username: String){
