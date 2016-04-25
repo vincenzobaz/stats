@@ -1,6 +1,7 @@
 package me.reminisce.statistics
 
 import reactivemongo.bson._
+
 import me.reminisce.server.GameEntities._
 
 object StatisticEntities {
@@ -11,19 +12,35 @@ object StatisticEntities {
   case class AverageScore(average: Double) extends Statistic
   case class QuestionResume(correct: Int, wrong: Int) extends Statistic
   //list of all players ?
-  case class Stats(_id: String,
+  case class Stats(
+    userID: String,
     gameResume: GameResume,
     averageScore: AverageScore,
-    questionResume: QuestionResume
-    ) extends EntityMessage with Statistic
+    questionResume: QuestionResume,
+    _id: Option[BSONObjectID] = None
+    ) extends Statistic with EntityMessage
 
   implicit val gameResumeHandler: BSONHandler[BSONDocument, GameResume] = Macros.handler[GameResume]
   implicit val avgScoreHandler: BSONHandler[BSONDocument, AverageScore] = Macros.handler[AverageScore]
   implicit val questionResumeHandler: BSONHandler[BSONDocument, QuestionResume] = Macros.handler[QuestionResume]
   implicit val statsHandler: BSONHandler[BSONDocument, Stats] = Macros.handler[Stats]
 
+  implicit object StatsWriter extends BSONDocumentWriter[Statistic with EntityMessage] {
+    def write(stats: Statistic with EntityMessage): BSONDocument =
+      stats match {
+        case Stats(userID, gameResume, averageScore, questionResume, id) =>
+      BSONDocument(
+        //"_id" -> id,
+        "userID" -> userID,
+        "gameResume" -> gameResume,
+        "averageScore" -> averageScore,
+        "questionResume" -> questionResume
+      )
+    }
+  }
+
   implicit object StatisticWriter extends BSONDocumentWriter[Statistic] {
-    def write(stat: Statistic) : BSONDocument =
+    def write(stat: Statistic): BSONDocument =
       stat match {
         case GameResume(won, lost) => BSONDocument(
           "won" -> won,
@@ -36,12 +53,7 @@ object StatisticEntities {
           "correct" -> correct,
           "wrong" -> wrong
           )
-        case Stats(id, wonGame, averageScore, totalQuestion) => BSONDocument(
-          "_id" -> id,
-          "wonGame" -> wonGame,
-          "averageScore" -> averageScore,
-          "totalQuestion" -> totalQuestion
-          )
+        case a: Stats => StatsWriter.write(a)
       }
   }
 

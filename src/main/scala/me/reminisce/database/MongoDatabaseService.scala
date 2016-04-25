@@ -35,7 +35,7 @@ import scala.util.{Failure, Success}
     val usersCollection = "users"
     val scoresCollection = "scores"
     val cacheCollection = "cachedStats"
-    val statsCollection = "games"
+    val gameCollection = "games"
 
 
   /**
@@ -52,8 +52,9 @@ import scala.util.{Failure, Success}
     def props(db: DefaultDB): Props =
     Props(new MongoDatabaseService(db))
 
-    case class InsertEntity(entity: EntityMessage, collection: String)
+    case class InsertEntity(entity: EntityMessage)
     case class ComputeStats(userID: String)
+    case class InsertStats(stats: Statistic, collection: String)
 
   }
 
@@ -65,8 +66,9 @@ import scala.util.{Failure, Success}
 
 
     def receive = {
-      case InsertEntity(entity, collection) =>
-        insertInDb(entity, collection)
+      case InsertEntity(entity) =>
+        insertInDb(entity)
+      case InsertStats(stats, collection) =>
       case ComputeStats(userID) =>
         val gameResume = getGameResume(userID)
         val avgScore = getAverageScore(userID)
@@ -76,11 +78,22 @@ import scala.util.{Failure, Success}
         context.parent ! DummyWorker.ResultStat(stats)
     }
 
-    def insertInDb(entity: EntityMessage, collection: String){
+    def insertInDb(entity: EntityMessage){
       entity match {
         case g: Game =>
-          val col = db[BSONCollection](collection)   
+          val col = db[BSONCollection](MongoDatabaseService.gameCollection)   
           val future = col.insert(g)
+
+          future.onComplete {
+            case Failure(e) => throw e
+            case Success(lastError) => {
+              log.info("successfully inserted document with lastError = " + lastError)
+              context.parent ! DummyWorker.Done
+            }
+          }
+        case s: Statistic =>
+          val col = db[BSONCollection](MongoDatabaseService.cacheCollection)   
+          val future = col.insert(s)
 
           future.onComplete {
             case Failure(e) => throw e
@@ -91,6 +104,22 @@ import scala.util.{Failure, Success}
           }
       }
     }
+
+  /*  def insertStatsInDb(stats: Statistic, collection: String){
+      stats match {
+        case s: Stats =>
+          val col = db[BSONCollection](collection)   
+          val future = col.insert(s)
+
+          future.onComplete {
+            case Failure(e) => throw e
+            case Success(lastError) => {
+              log.info("successfully inserted document with lastError = " + lastError)
+              context.parent ! DummyWorker.Done
+            }
+          }
+      }
+    }*/
 
     def getGameResume(userID: String): GameResume = {
       
@@ -170,7 +199,7 @@ import scala.util.{Failure, Success}
       val playerScores = if (player == 1) "$player1Scores" else "$player2Scores"
       
       val query = BSONDocument(
-        "aggregate" -> MongoDatabaseService.statsCollection,
+        "aggregate" -> MongoDatabaseService.gameCollection,
         "pipeline" -> BSONArray(
           BSONDocument("$match" -> BSONDocument(
             p -> userID,

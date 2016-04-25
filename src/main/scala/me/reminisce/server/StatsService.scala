@@ -45,8 +45,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   val db: DefaultDB
 
   val statsRoutes = {
-
-    //import UserJsonSupport._
+    
     import GameFormat._
 
     path("hello") {

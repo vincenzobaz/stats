@@ -38,9 +38,10 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     case DummyService.ComputeStatistics(userID) =>
       log.info(s"Compute stats for $userID")
       dbService ! MongoDatabaseService.ComputeStats(userID)
-    case ResultStat(stat) =>
-      println(s"insert $stat in stats collection")
-      insertEntity(stat)
+    case ResultStat(stats: Stats) =>
+      println(s"insert $stats in stats collection")
+      //insertStatistic(stats)
+      insertEntity(stats)
     case Done =>
       dbService ! PoisonPill // stop the DBService
       context.parent ! Done // Notify the service that the insertion is done
@@ -62,15 +63,20 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     
     entity match {
       case g: Game =>
-
-        //val dbService = context.actorOf(MongoDatabaseService.props(database))
-        dbService ! MongoDatabaseService.InsertEntity(g, "games")
-      case s: ResultStat =>
-        dbService ! MongoDatabaseService.InsertEntity(s, "stats")
+        dbService ! MongoDatabaseService.InsertEntity(g)
+      case s: Stats =>
+      dbService ! MongoDatabaseService.InsertEntity(s)
       case _ =>
         log.info("unknown entity -- abort")
         context.parent ! Abort
     }    
   }
-
+  /*def insertStatistic(stats: Statistic): Unit = {
+    stats match {
+      case s: Stats =>
+      dbService ! MongoDatabaseService.InsertStats(s, "stats")
+      case _ => ???
+    }
+  }
+*/
 }
