@@ -2,7 +2,6 @@ package me.reminisce.dummy
 
 import akka.actor._
 import me.reminisce.database._
-import me.reminisce.database.MongoDBEntities._
 import reactivemongo.api.DefaultDB
 import reactivemongo.bson.{BSONDocument, BSONInteger}
 import reactivemongo.core.commands.GetLastError
@@ -11,16 +10,15 @@ import spray.json._
 import spray.httpx._
 import scala.concurrent.ExecutionContext.Implicits.global
 import me.reminisce.server.GameEntities._
+import me.reminisce.statistics.StatisticEntities._
 
 
 object DummyWorker{
 
   case object Done
   case object Abort
-  case object InsertionDone
-  case object ComputationDone
 
-
+  case class ResultStat(stat: Statistic)
   def props(database: DefaultDB): Props =
     Props(new DummyWorker(database))
 }
@@ -28,6 +26,8 @@ object DummyWorker{
 class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
   import DummyWorker._
   
+  val dbService = context.actorOf(MongoDatabaseService.props(database))
+
   def receive = {
 
     case DummyService.InsertEntity(entity) =>
@@ -35,11 +35,23 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
 
     case DummyService.GetStatistics(userID) =>
       log.info(s"Worker received a Search message with $userID.")
-
+    case DummyService.ComputeStatistics(userID) =>
+      log.info(s"Compute stats for $userID")
+      dbService ! MongoDatabaseService.ComputeStats(userID)
+    case ResultStat(stat) =>
+      println(s"insert $stat in stats collection")
+      insertEntity(stat)
     case Done =>
-      stop()
-      //TODO kill the dbservice
+      dbService ! PoisonPill // stop the DBService
+      context.parent ! Done // Notify the service that the insertion is done
+      log.info("PoisonPill sent to dbService, Done sent to parent.")
+    case Abort =>
+      dbService ! PoisonPill 
+      context.parent ! Abort   
+      log.info("PoisonPill sent to dbService, Abort sent to parent.")
   }
+
+
 
   def stop(): Unit = {
     log.info("Worker is stopped")
@@ -51,33 +63,14 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
     entity match {
       case g: Game =>
 
-        val dbService = context.actorOf(MongoDatabaseService.props(database))
+        //val dbService = context.actorOf(MongoDatabaseService.props(database))
         dbService ! MongoDatabaseService.InsertEntity(g, "games")
+      case s: ResultStat =>
+        dbService ! MongoDatabaseService.InsertEntity(s, "stats")
       case _ =>
         log.info("unknown entity -- abort")
         context.parent ! Abort
     }    
   }
 
-  def dummyQuery(username: String): Unit = {
-    
-    val dbService = context.actorOf(MongoDatabaseService.props(database))
-    dbService ! MongoDatabaseService.Query(username)
-
-  }
-
-  def dummyInsert(message: Message): Unit = {
-/*    val dbService = context.actorOf(MongoDatabaseService.props(database))
-
-    message match {
-      case u: User =>
-        val bson : BSONDocument = UserWriter.write(u)
-        dbService ! MongoDatabaseService.Insert(bson)
-        
-      case _ => 
-        log.info("Unknown Message model -- Killing dbService actor")
-        dbService ! PoisonPill
-    }
-    */
-  }
 }

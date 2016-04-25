@@ -9,7 +9,7 @@ import reactivemongo.bson._
 
 object GameEntities {
 
-  abstract sealed trait EntityMessage
+  abstract trait EntityMessage
 
   case class Game(_id: String,
     player1: String,

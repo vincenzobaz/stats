@@ -15,8 +15,8 @@ import me.reminisce.server.GameEntities._
 object DummyService {
 
  case class InsertEntity(entity: EntityMessage) extends RestMessage
- case class GetStatistics(userID: Int) extends RestMessage
- case class ComputeStatistics(userID: Int)
+ case class GetStatistics(userID: String) extends RestMessage
+ case class ComputeStatistics(userID: String)
  case class Result(name: String, score: Int) //dummy
 
 
@@ -33,14 +33,13 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
 // Waiting for new request
   def waiting : Receive = {
     case InsertEntity(entity) =>
-      log.info(s"Entity Message $entity received by dummy service")
       val dummyWorker = context.actorOf(DummyWorker.props(database))
-      dummyWorker ! DummyService.InsertEntity(entity)
       context.become(inserting)
+      dummyWorker ! DummyService.InsertEntity(entity)
     case GetStatistics(userID) => 
-      println(userID)
-      // TODO 
+      val worker = context.actorOf(DummyWorker.props(database))
       context.become(gettingStats)
+      worker ! DummyService.ComputeStatistics(userID)   
     case ComputeStatistics(userID) =>
       println(userID)
       // TODO
@@ -49,26 +48,25 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
       log.info("Unexpected message has been received in waiting state")
   }
 
-// inserting a new entity in the db. No other request can be executed 
+// Inserting a new entity in the db. No other request can be executed 
   def inserting : Receive = {
     case DummyWorker.Done => 
       log.info("Insertion accomplished")
-      context.become(waiting)
+      context.become(computingStats)
     case DummyWorker.Abort => 
       log.info("Insertion aborted")
+      val worker = context.actorOf(DummyWorker.props(database))
+      worker ! ComputeStatistics("123456")
       context.become(waiting)
     case _ => 
       log.info("Unexpected message has been received in inserting state")
       context.become(waiting)
   }
 
-// computing the new statistic after a new entities has been inserted. No other request can be executed
+// Computing the new statistic after a new entities has been inserted. No other request can be executed
   def computingStats : Receive = {
-    case DummyWorker.ComputationDone =>
-      log.info("Statistics computation accomplished")
-      //TODO insert in DB
-    case DummyWorker.InsertionDone => 
-      log.info("Statistics insertion accomplished")
+    case DummyWorker.Done =>
+      log.info("Statistics computation and insertion accomplished")
       context.become(waiting)
     case DummyWorker.Abort =>
       log.info("Computation aborted")
@@ -83,8 +81,5 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
     case _ =>
     log.info("Unexpected message has been received in gettingStats state")
     context.become(waiting)
-
   }
-
-
 }
