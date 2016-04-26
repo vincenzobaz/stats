@@ -74,7 +74,9 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       val questionResume = getQuestionResume(userID)
    
       val stats = Stats(userID, gameResume, avgScore, questionResume)
-      context.parent ! DummyWorker.ResultStat(stats)
+      context.parent ! DummyWorker.InsertStat(stats)
+    case DummyService.GetStatistics(userID) => 
+      getStats(userID)
   }
 
   def insertInDb(entity: EntityMessage){
@@ -105,6 +107,25 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
           }
         }
     }
+  }
+
+  def getStats(userID: String): Unit = {
+    val query = BSONDocument(
+      "userID" -> userID
+      )
+    val s: Future[List[Stats]] = db[BSONCollection](MongoDatabaseService.cacheCollection).
+      find(query).
+      cursor[Stats].
+      collect[List](1)
+      println(s" stat: $s")
+
+      s.onComplete{
+        case Success(stats) =>
+          context.parent ! DummyWorker.ResultStat(stats.head)
+        case f =>
+          log.info(s"Failure while getting stats. Error: $f ")
+          context.parent ! DummyWorker.Abort
+      }
   }
 
   def getGameResume(userID: String): GameResume = {  

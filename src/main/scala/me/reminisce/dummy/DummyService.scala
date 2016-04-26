@@ -97,6 +97,8 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
   }
 
   def gettingStats : Receive = {
+    case DummyWorker.ResultStat(stats) =>
+      log.info(s"Statistics for id: ${stats.userID} is $stats")
     case Result(name, score) => 
       println("result received")
       context.become(waiting)

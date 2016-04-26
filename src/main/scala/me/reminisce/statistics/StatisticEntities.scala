@@ -12,6 +12,7 @@ object StatisticEntities {
   case class AverageScore(average: Double) extends Statistic
   case class QuestionResume(correct: Int, wrong: Int) extends Statistic
   
+  // TODO Option[] for each field excepting the ID
   case class Stats(
     userID: String,
     gameResume: GameResume,
@@ -36,6 +37,15 @@ object StatisticEntities {
         "averageScore" -> averageScore,
         "questionResume" -> questionResume
       )
+    }
+  }
+  implicit object StatsReader extends BSONDocumentReader[Stats] {
+    def read(doc: BSONDocument): Stats = {
+      val userID = doc.getAs[String]("userID").get
+      val gameResume = doc.getAs[GameResume]("gameResume").get
+      val averageScore = doc.getAs[AverageScore]("averageScore").get
+      val questionResume = doc.getAs[QuestionResume]("questionResume").get
+      Stats(userID, gameResume, averageScore, questionResume)
     }
   }
 

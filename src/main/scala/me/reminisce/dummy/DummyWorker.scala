@@ -18,7 +18,8 @@ object DummyWorker{
   case object Done
   case object Abort
 
-  case class ResultStat(stat: Statistic)
+  case class ResultStat(stat: Stats)
+  case class InsertStat(stat: Statistic)
   def props(database: DefaultDB): Props =
     Props(new DummyWorker(database))
 }
@@ -32,11 +33,14 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
 
     case DummyService.InsertEntity(entity) =>
       insertEntity(entity)
-    case DummyService.GetStatistics(userID) => ???
+    case DummyService.GetStatistics(userID) => 
+      dbService ! DummyService.GetStatistics(userID)
     case DummyService.ComputeStatistics(userID) =>
       dbService ! MongoDatabaseService.ComputeStats(userID)
-    case ResultStat(stats: Stats) =>
+    case InsertStat(stats: Stats) =>
       insertEntity(stats)
+    case ResultStat(stats: Stats) =>
+      context.parent ! ResultStat(stats)
     case DummyService.Recompute(ids) =>
       context.parent ! DummyService.Recompute(ids)
     case Done =>
