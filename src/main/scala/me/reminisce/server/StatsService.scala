@@ -32,9 +32,7 @@ object UserJsonSupport extends DefaultJsonProtocol with SprayJsonSupport{
   implicit val PortoFolioFormats = jsonFormat3(User)
 }
 
-object GameFormat extends Json4sSupport with StatsFormatter{
-
-}
+object GameFormat extends Json4sSupport with StatsFormatter{}
 
 /**
   * Defines a GameCreatorService with the handled routes.

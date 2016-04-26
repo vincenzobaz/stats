@@ -18,6 +18,7 @@ object DummyService {
  case class GetStatistics(userID: String) extends RestMessage
  case class ComputeStatistics(userID: String)
  case class Result(name: String, score: Int) //dummy
+ case class Recompute(ids: List[String])
 
 
  def props(database: DefaultDB): Props = 
@@ -39,11 +40,11 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
     case GetStatistics(userID) => 
       val worker = context.actorOf(DummyWorker.props(database))
       context.become(gettingStats)
-      worker ! DummyService.ComputeStatistics(userID)   
+      worker ! DummyService.GetStatistics(userID)   
     case ComputeStatistics(userID) =>
-      println(userID)
-      // TODO
-      context.become(computingStats)
+      val worker = context.actorOf(DummyWorker.props(database))
+      context.become(computingStats(1))
+      worker ! DummyService.ComputeStatistics(userID)   
     case _ => 
       log.info("Unexpected message has been received in waiting state")
   }
@@ -52,32 +53,53 @@ class DummyService(database: DefaultDB) extends Actor with ActorLogging {
   def inserting : Receive = {
     case DummyWorker.Done => 
       log.info("Insertion accomplished")
-      context.become(computingStats)
+      context.become(waiting)
     case DummyWorker.Abort => 
       log.info("Insertion aborted")
-      val worker = context.actorOf(DummyWorker.props(database))
-      worker ! ComputeStatistics("123456")
       context.become(waiting)
+    case Recompute(ids) => 
+      log.info(s"Recompute stats for $ids")
+      ids.foreach{ id =>
+        val worker = context.actorOf(DummyWorker.props(database))
+        worker ! DummyService.ComputeStatistics(id)
+        //TODO pool of workers ? When we have too many stats to compute
+      } 
+      context.become(computingStats(ids.length))   
     case _ => 
       log.info("Unexpected message has been received in inserting state")
       context.become(waiting)
   }
 
-// Computing the new statistic after a new entities has been inserted. No other request can be executed
-  def computingStats : Receive = {
+// Computing and inserting the new statistic after a new entities has been inserted. No other request can be executed
+  def computingStats(nb: Int): Receive = {
     case DummyWorker.Done =>
-      log.info("Statistics computation and insertion accomplished")
-      context.become(waiting)
+      val running = nb - 1
+      if (running == 0){
+        log.info("Statistics computation and insertion accomplished")        
+        context.become(waiting)
+      } else {
+        log.info(s"Remaining running computation: $running")
+        context.become(computingStats(running))
+      }
+
     case DummyWorker.Abort =>
-      log.info("Computation aborted")
-      context.become(waiting)
+      val running = nb -1
+      if (running == 0){
+        log.info("Statistics computation and insertion accomplished")        
+        context.become(waiting)
+      } else {
+        log.info(s"Remaining running computation: $running")
+        context.become(computingStats(running))
+      }
     case _ =>
       log.info("Unexpected message has been received in computingStats state")
       context.become(waiting)
   }
 
   def gettingStats : Receive = {
-    case Result(name, score) => println("result received")
+    case Result(name, score) => 
+      println("result received")
+      context.become(waiting)
     case _ =>
     log.info("Unexpected message has been received in gettingStats state")
     context.become(waiting)

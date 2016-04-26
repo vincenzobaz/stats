@@ -32,16 +32,13 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
 
     case DummyService.InsertEntity(entity) =>
       insertEntity(entity)
-
-    case DummyService.GetStatistics(userID) =>
-      log.info(s"Worker received a Search message with $userID.")
+    case DummyService.GetStatistics(userID) => ???
     case DummyService.ComputeStatistics(userID) =>
-      log.info(s"Compute stats for $userID")
       dbService ! MongoDatabaseService.ComputeStats(userID)
     case ResultStat(stats: Stats) =>
-      println(s"insert $stats in stats collection")
-      //insertStatistic(stats)
       insertEntity(stats)
+    case DummyService.Recompute(ids) =>
+      context.parent ! DummyService.Recompute(ids)
     case Done =>
       dbService ! PoisonPill // stop the DBService
       context.parent ! Done // Notify the service that the insertion is done
@@ -71,12 +68,4 @@ class DummyWorker(database: DefaultDB) extends Actor with ActorLogging{
         context.parent ! Abort
     }    
   }
-  /*def insertStatistic(stats: Statistic): Unit = {
-    stats match {
-      case s: Stats =>
-      dbService ! MongoDatabaseService.InsertStats(s, "stats")
-      case _ => ???
-    }
-  }
-*/
 }

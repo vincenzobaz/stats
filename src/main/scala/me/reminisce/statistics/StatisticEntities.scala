@@ -11,7 +11,7 @@ object StatisticEntities {
   case class GameResume(won: Int, lost: Int) extends Statistic
   case class AverageScore(average: Double) extends Statistic
   case class QuestionResume(correct: Int, wrong: Int) extends Statistic
-  //list of all players ?
+  
   case class Stats(
     userID: String,
     gameResume: GameResume,
