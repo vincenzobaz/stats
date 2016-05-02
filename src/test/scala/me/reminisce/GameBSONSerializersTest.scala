@@ -5,7 +5,7 @@ import me.reminisce.server.GameEntities._
 import reactivemongo.bson._
 
 
-class BSONSerializersTest extends FunSuite {
+class GameBSONSerializersTest extends FunSuite {
 
   // ***** MOVE *****
   val move = Move(2,1)
