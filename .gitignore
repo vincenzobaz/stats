@@ -29,6 +29,11 @@ project/plugins/project/
 .DS-Store
 .DS_Store
 
+#Eclipse
+.classpath
+.project
+.settings/
+
 #Python scripts
 
 *__pycache__*

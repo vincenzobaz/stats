@@ -1,65 +1,66 @@
 package me.reminisce.statistics
 
 import reactivemongo.bson._
-
 import me.reminisce.server.GameEntities._
 
 object StatisticEntities {
 
-  abstract sealed trait Statistic
+  sealed trait Statistic
   
-  case class GameResume(won: Int, lost: Int) extends Statistic
+  case class CountWinnerGame(won: Int, lost: Int) extends Statistic
   case class AverageScore(average: Double) extends Statistic
-  case class QuestionResume(correct: Int, wrong: Int) extends Statistic
-  
-  // TODO Option[] for each field excepting the ID
+  case class CountCorrectQuestion(correct: Int, wrong: Int) extends Statistic
+
+  // TODO Option[] for each field excepting the userID
+  // TODO Add a field "Date"
+
   case class Stats(
-    userID: String,
-    gameResume: GameResume,
-    averageScore: AverageScore,
-    questionResume: QuestionResume,
-    _id: Option[BSONObjectID] = None
+                    userID: String,
+                    countWinnerGame: CountWinnerGame,
+                    averageScore: AverageScore,
+                    countCorrectQuestion: CountCorrectQuestion,
+                    _id: Option[BSONObjectID] = None
     ) extends Statistic with EntityMessage
 
-  implicit val gameResumeHandler: BSONHandler[BSONDocument, GameResume] = Macros.handler[GameResume]
+  implicit val gameResumeHandler: BSONHandler[BSONDocument, CountWinnerGame] = Macros.handler[CountWinnerGame]
   implicit val avgScoreHandler: BSONHandler[BSONDocument, AverageScore] = Macros.handler[AverageScore]
-  implicit val questionResumeHandler: BSONHandler[BSONDocument, QuestionResume] = Macros.handler[QuestionResume]
+  implicit val questionResumeHandler: BSONHandler[BSONDocument, CountCorrectQuestion] = Macros.handler[CountCorrectQuestion]
   implicit val statsHandler: BSONHandler[BSONDocument, Stats] = Macros.handler[Stats]
 
   implicit object StatsWriter extends BSONDocumentWriter[Statistic with EntityMessage] {
     def write(stats: Statistic with EntityMessage): BSONDocument =
       stats match {
-        case Stats(userID, gameResume, averageScore, questionResume, id) =>
+        case Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id) =>
       BSONDocument(
         //"_id" -> id,
         "userID" -> userID,
-        "gameResume" -> gameResume,
+        "countWinnerGame" -> countWinnerGame,
         "averageScore" -> averageScore,
-        "questionResume" -> questionResume
+        "countCorrectQuestion" -> countCorrectQuestion
       )
     }
   }
   implicit object StatsReader extends BSONDocumentReader[Stats] {
     def read(doc: BSONDocument): Stats = {
       val userID = doc.getAs[String]("userID").get
-      val gameResume = doc.getAs[GameResume]("gameResume").get
+      val countWinnerGame = doc.getAs[CountWinnerGame]("countWinnerGame").get
       val averageScore = doc.getAs[AverageScore]("averageScore").get
-      val questionResume = doc.getAs[QuestionResume]("questionResume").get
-      Stats(userID, gameResume, averageScore, questionResume)
+      val countCorrectQuestion = doc.getAs[CountCorrectQuestion]("countCorrectQuestion").get
+      Stats(userID, countWinnerGame, averageScore, countCorrectQuestion)
     }
   }
 
   implicit object StatisticWriter extends BSONDocumentWriter[Statistic] {
     def write(stat: Statistic): BSONDocument =
       stat match {
-        case GameResume(won, lost) => BSONDocument(
+        case CountWinnerGame(won, lost) => BSONDocument(
           "won" -> won,
           "lost" -> lost
           )
         case AverageScore(average) => BSONDocument(
           "average" -> average
           )
-        case QuestionResume(correct, wrong) => BSONDocument(
+        case CountCorrectQuestion(correct, wrong) => BSONDocument(
           "correct" -> correct,
           "wrong" -> wrong
           )

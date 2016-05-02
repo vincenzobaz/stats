@@ -3,21 +3,19 @@ package me.reminisce.statsProcessing
 import akka.actor.Props
 
 import me.reminisce.server.GameEntities._
-//import me.reminisce.server.ApplicationConfiguration
 import me.reminisce.database._
 import me.reminisce.statistics.StatisticEntities._
 
 import reactivemongo.api.collections.bson._
 import reactivemongo.bson.{BSONDocument, BSONArray}
 import reactivemongo.api.DefaultDB
-//import reactivemongo.core.commands.GetLastError
-import reactivemongo.core.commands._
-//import reactivemongo.api._
-//import reactivemongo.bson._
+import reactivemongo.api.commands.Command
+import reactivemongo.api.BSONSerializationPack
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 import scala.util.{Failure, Success}
 
@@ -30,8 +28,8 @@ import scala.util.{Failure, Success}
   /**
     * Collection names definitions
     */
-    val usersCollection = "users"
-    val scoresCollection = "scores"
+    //val usersCollection = "users"
+   // val scoresCollection = "scores"
     val cacheCollection = "cachedStats"
     val gameCollection = "games"
 
@@ -54,6 +52,9 @@ import scala.util.{Failure, Success}
 
   }
 
+// TODO: use workers to compute each sub-stats -> send the result via message -> avoid to wait for the future
+
+
 class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
 
   import MongoDatabaseService._
@@ -66,14 +67,14 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       insertInDb(entity)
     case InsertStats(stats, collection) =>
     case ComputeStats(userID) =>
-      val gameResume = getGameResume(userID)
+      val countWinnerGame = computeCountWinnerGame(userID)
       val avgScore = getAverageScore(userID)
-      val questionResume = getQuestionResume(userID)
+      val countCorrectQuestion = computeCountCorrectQuestion(userID)
    
-      val stats = Stats(userID, gameResume, avgScore, questionResume)
-      context.parent ! Worker.InsertStat(stats)
-    case DummyService.GetStatistics(userID) => 
-      getStats(userID)
+      val stats = Stats(userID, countWinnerGame, avgScore, countCorrectQuestion)
+      context.parent ! StatsProcessingWorker.InsertStat(stats)
+    case StatsProcessingService.GetStatistics(userID) =>
+      retrieveStats(userID)
   }
 
   def insertInDb(entity: EntityMessage){
@@ -88,7 +89,7 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
             log.info("successfully inserted Game with lastError = " + lastError)
             val toRecompute = List(g.player1, g.player2)
 
-            context.parent ! DummyService.Recompute(toRecompute)
+            context.parent ! StatsProcessingService.Recompute(toRecompute)
             log.info(s"Recompute sent to dummy worker with $toRecompute")
           }
         }
@@ -100,13 +101,13 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
           case Failure(e) => throw e
           case Success(lastError) => {
             log.info("successfully inserted Stats with lastError = " + lastError)
-            context.parent ! Worker.Done
+            context.parent ! StatsProcessingWorker.Done
           }
         }
     }
   }
 
-  def getStats(userID: String): Unit = {
+  def retrieveStats(userID: String): Unit = {
     val query = BSONDocument(
       "userID" -> userID
       )
@@ -114,42 +115,42 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
 
     val s: Future[List[Stats]] = db[BSONCollection](MongoDatabaseService.cacheCollection).
       find(query).
-      cursor[Stats].
+      cursor[Stats]().
       collect[List](1)
        
       s.onComplete{
         case Success(stats) =>
-          context.parent ! Worker.ResultStat(stats.head)
+          context.parent ! StatsProcessingWorker.ResultStat(stats.head)
         case f =>
           log.info(s"Failure while getting stats. Error: $f ")
-          context.parent ! Worker.Abort
+          context.parent ! StatsProcessingWorker.Abort
       }
   }
 
-  def getGameResume(userID: String): CountWinnerGame = {
+  def computeCountWinnerGame(userID: String): CountWinnerGame = {
     // TODO
   CountWinnerGame(0, 0)
   }
 
   def getAverageScore(userID: String) : AverageScore = {
-    val s1 = commandScoreResume(userID, 1)
-    val s2 = commandScoreResume(userID, 2)
+    val s1 = computeCountsForAverageScore(userID, 1)
+    val s2 = computeCountsForAverageScore(userID, 2)
     println(s"s1: $s1 s2: $s2")
     if ( s1._1 != null && s2._1 != null) {
       AverageScore((s1._2 + s2._2) / s1._3 + s2._3)
+    } else {
+      AverageScore(2)
     }
-    AverageScore(2)
+    
   }
-  def getQuestionResume(userID: String): CountCorrectQuestion = {
+  def computeCountCorrectQuestion(userID: String): CountCorrectQuestion = {
     // TODO
     CountCorrectQuestion(0,0)
   }
 
-  def commandScoreResume(userID: String, player: Int): (String, Int, Int) = {
-    
+  def computeCountsForAverageScore(userID: String, player: Int): (String, Int, Int) = {
     val p = if (player == 1) "player1" else "player2"
     val playerScores = if (player == 1) "$player1Scores" else "$player2Scores"
-    
     val query = BSONDocument(
       "aggregate" -> MongoDatabaseService.gameCollection,
       "pipeline" -> BSONArray(
@@ -167,31 +168,32 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       )
     )
 
-    var resume: (String, Int, Int) = (null ,0, 0)
+  var counts: (String, Int, Int) = (null ,0, 0)
 
-    val score: Future[BSONDocument] = db.command(RawCommand(query))
-    score.onComplete {
-      case Success(result) => {
-        result.get("result") match {
-          case Some(array: BSONArray) =>
-            array.get(0) match {
-              case Some(doc: BSONDocument) =>
-                  val id = doc.getAs[String]("_id").get
-                  val count = doc.getAs[Int]("count").get
-                  val sum = doc.getAs[Int]("sum").get
-                  resume = (id, count, sum)
-              case _ =>
-              log.info("Empty result")
-            }
-          case _ =>
-            log.info("Unknown result form")
-        }
-      }
-      case o =>
-        log.info("The query failed")
-        context.parent ! Worker.Abort
-    }
-    Await.result(score, 5000 millis)
-    resume
+  val runner = Command.run(BSONSerializationPack)
+  
+  val s : Future[BSONDocument] = runner.apply(db, runner.rawCommand(query)).one[BSONDocument]
+  s.onComplete{
+    case Success(result) => 
+      result.get("result") match {
+        case Some(array: BSONArray) =>
+          array.get(0) match {
+            case Some(doc: BSONDocument) =>
+              val id = doc.getAs[String]("_id").get
+              val count = doc.getAs[Int]("count").get
+              val sum = doc.getAs[Int]("sum").get 
+              counts = (id, count, sum)
+              log.info(s"Stats computed for user $userID as player $player: $counts")
+            case e => log.info(s"No results for the user $userID as player $player")
+          }
+        case e =>
+          log.info(s"Error: $e is not a BSONArray")
+    }    
+    case error =>
+      log.info(s"The command has failed with error: $error")
+  }
+    Await.result(s, 5000 millis)
+    counts
+
   }
 }

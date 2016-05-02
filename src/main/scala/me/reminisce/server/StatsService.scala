@@ -1,35 +1,26 @@
 package me.reminisce.server
 
 import akka.actor._
-import me.reminisce.server.domain.RESTHandlerCreator
-import me.reminisce.dummy._
-import me.reminisce.database._
-import me.reminisce.database.MongoDBEntities._
+
 import spray.routing._
-import spray.httpx._
-import spray.json._
-import scala.concurrent.ExecutionContext.Implicits.global
-import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
+import spray.httpx.Json4sSupport
+
 import reactivemongo.api.DefaultDB
+
 import me.reminisce.server.GameEntities._
 import me.reminisce.server.jsonserializer.StatsFormatter
-import org.json4s.Formats
-import org.json4s.DefaultFormats
-import spray.httpx.Json4sSupport
+import me.reminisce.statsProcessing.StatsProcessingService
+import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
 
 object StatsService
 
 /**
-  * Defines a generic GameCreatorServiceActor
+  * Defines a generic StatServiceActor
   */
 trait StatsServiceActor extends StatsService {
   def actorRefFactory = context
 
   def receive = runRoute(statsRoutes)
-}
-
-object UserJsonSupport extends DefaultJsonProtocol with SprayJsonSupport{
-  implicit val PortoFolioFormats = jsonFormat3(User)
 }
 
 object GameFormat extends Json4sSupport with StatsFormatter{}
@@ -58,7 +49,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         parameters("userID"){
           (userID) =>
             testDB{
-              DummyService.GetStatistics(userID)
+              StatsProcessingService.GetStatistics(userID)
             }
         }
       }   
@@ -67,7 +58,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
             entity(as[Game]) {
               game => {
                 insertDB {
-                  DummyService.InsertEntity(game)
+                  StatsProcessingService.InsertEntity(game)
                }
               } 
             }
@@ -77,13 +68,13 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     
   private def testDB(message: RestMessage): Route = {
     
-    val dummyService = context.actorOf(DummyService.props(db))
+    val dummyService = context.actorOf(StatsProcessingService.props(db))
     ctx => perRequest(ctx, dummyService, message)
   }
 
   private def insertDB(message: RestMessage) : Route = {
   
-    val dummyService = context.actorOf(DummyService.props(db))
+    val dummyService = context.actorOf(StatsProcessingService.props(db))
     ctx => perRequest(ctx, dummyService, message)
   }
 }

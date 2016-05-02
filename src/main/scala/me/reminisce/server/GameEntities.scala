@@ -3,13 +3,12 @@ package me.reminisce.server
 import me.reminisce.server.GameEntities.QuestionKind.QuestionKind
 import me.reminisce.server.GameEntities.SubjectType.SubjectType
 import me.reminisce.server.domain.RestMessage
-import me.reminisce.dummy.DummyService._ 
 import reactivemongo.bson._
 
 
 object GameEntities {
 
-  abstract trait EntityMessage
+  trait EntityMessage
 
   case class Game(_id: String,
     player1: String,
