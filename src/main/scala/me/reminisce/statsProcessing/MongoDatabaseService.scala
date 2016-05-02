@@ -1,24 +1,22 @@
-package me.reminisce.database
+package me.reminisce.statsProcessing
 
 import akka.actor.Props
 
 import me.reminisce.server.GameEntities._
-import me.reminisce.database.MongoDatabaseService._
-import me.reminisce.server.ApplicationConfiguration
-import me.reminisce.dummy._
+//import me.reminisce.server.ApplicationConfiguration
+import me.reminisce.database._
 import me.reminisce.statistics.StatisticEntities._
 
-import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson._
-import reactivemongo.bson.{BSONDocument, BSONInteger}
-import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
-import reactivemongo.core.commands.GetLastError
+import reactivemongo.bson.{BSONDocument, BSONArray}
+import reactivemongo.api.DefaultDB
+//import reactivemongo.core.commands.GetLastError
 import reactivemongo.core.commands._
-import reactivemongo.api._
-import reactivemongo.bson._
+//import reactivemongo.api._
+//import reactivemongo.bson._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ ExecutionContext, Future, Await}
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 
 import scala.util.{Failure, Success}
@@ -44,7 +42,6 @@ import scala.util.{Failure, Success}
   
   /**
     * Creates a database service actor
-    * @param userId userId of the user fdor which the data is stored
     * @param db database into which data is inserted
     * @return props for the created MongoDatabaseService
     */
@@ -74,7 +71,7 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       val questionResume = getQuestionResume(userID)
    
       val stats = Stats(userID, gameResume, avgScore, questionResume)
-      context.parent ! DummyWorker.InsertStat(stats)
+      context.parent ! Worker.InsertStat(stats)
     case DummyService.GetStatistics(userID) => 
       getStats(userID)
   }
@@ -103,7 +100,7 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
           case Failure(e) => throw e
           case Success(lastError) => {
             log.info("successfully inserted Stats with lastError = " + lastError)
-            context.parent ! DummyWorker.Done
+            context.parent ! Worker.Done
           }
         }
     }
@@ -113,24 +110,25 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
     val query = BSONDocument(
       "userID" -> userID
       )
+    // TODO sort by Date and take the lastest
+
     val s: Future[List[Stats]] = db[BSONCollection](MongoDatabaseService.cacheCollection).
       find(query).
       cursor[Stats].
       collect[List](1)
-      println(s" stat: $s")
-
+       
       s.onComplete{
         case Success(stats) =>
-          context.parent ! DummyWorker.ResultStat(stats.head)
+          context.parent ! Worker.ResultStat(stats.head)
         case f =>
           log.info(s"Failure while getting stats. Error: $f ")
-          context.parent ! DummyWorker.Abort
+          context.parent ! Worker.Abort
       }
   }
 
-  def getGameResume(userID: String): GameResume = {  
+  def getGameResume(userID: String): CountWinnerGame = {
     // TODO
-  GameResume(0, 0)
+  CountWinnerGame(0, 0)
   }
 
   def getAverageScore(userID: String) : AverageScore = {
@@ -142,9 +140,9 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
     }
     AverageScore(2)
   }
-  def getQuestionResume(userID: String): QuestionResume = {
+  def getQuestionResume(userID: String): CountCorrectQuestion = {
     // TODO
-    QuestionResume(0,0)
+    CountCorrectQuestion(0,0)
   }
 
   def commandScoreResume(userID: String, player: Int): (String, Int, Int) = {
@@ -189,10 +187,9 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
             log.info("Unknown result form")
         }
       }
-      case o => {
+      case o =>
         log.info("The query failed")
-        context.parent ! DummyWorker.Abort
-      } 
+        context.parent ! Worker.Abort
     }
     Await.result(score, 5000 millis)
     resume
