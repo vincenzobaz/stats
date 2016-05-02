@@ -19,20 +19,21 @@ object StatisticEntities {
                     countWinnerGame: CountWinnerGame,
                     averageScore: AverageScore,
                     countCorrectQuestion: CountCorrectQuestion,
-                    _id: Option[BSONObjectID] = None
+                    _id: Option[String] = None
     ) extends Statistic with EntityMessage
 
   implicit val gameResumeHandler: BSONHandler[BSONDocument, CountWinnerGame] = Macros.handler[CountWinnerGame]
   implicit val avgScoreHandler: BSONHandler[BSONDocument, AverageScore] = Macros.handler[AverageScore]
   implicit val questionResumeHandler: BSONHandler[BSONDocument, CountCorrectQuestion] = Macros.handler[CountCorrectQuestion]
-  implicit val statsHandler: BSONHandler[BSONDocument, Stats] = Macros.handler[Stats]
+ 
+  implicit val StatWriter: BSONDocumentWriter[Stats] = Macros.writer[Stats]
 
   implicit object StatsWriter extends BSONDocumentWriter[Statistic with EntityMessage] {
     def write(stats: Statistic with EntityMessage): BSONDocument =
       stats match {
         case Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id) =>
       BSONDocument(
-        //"_id" -> id,
+        "_id" -> id,
         "userID" -> userID,
         "countWinnerGame" -> countWinnerGame,
         "averageScore" -> averageScore,
@@ -40,13 +41,19 @@ object StatisticEntities {
       )
     }
   }
+
   implicit object StatsReader extends BSONDocumentReader[Stats] {
     def read(doc: BSONDocument): Stats = {
-      val userID = doc.getAs[String]("userID").get
+      
+      val id = doc.getAs[String]("_id")
+      println(id) // TODO Why it is None ??!
+
+      val userID = doc.getAs[String]("userID").get      
       val countWinnerGame = doc.getAs[CountWinnerGame]("countWinnerGame").get
       val averageScore = doc.getAs[AverageScore]("averageScore").get
       val countCorrectQuestion = doc.getAs[CountCorrectQuestion]("countCorrectQuestion").get
-      Stats(userID, countWinnerGame, averageScore, countCorrectQuestion)
+
+      Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id)
     }
   }
 

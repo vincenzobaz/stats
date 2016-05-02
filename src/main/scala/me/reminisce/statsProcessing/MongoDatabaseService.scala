@@ -108,6 +108,8 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
   }
 
   def retrieveStats(userID: String): Unit = {
+    println("Retrieving stats")
+    
     val query = BSONDocument(
       "userID" -> userID
       )
@@ -117,9 +119,10 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       find(query).
       cursor[Stats]().
       collect[List](1)
-       
+
       s.onComplete{
         case Success(stats) =>
+          stats.map(println)
           context.parent ! StatsProcessingWorker.ResultStat(stats.head)
         case f =>
           log.info(s"Failure while getting stats. Error: $f ")

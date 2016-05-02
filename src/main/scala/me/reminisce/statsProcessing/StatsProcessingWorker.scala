@@ -45,8 +45,6 @@ class StatsProcessingWorker(database: DefaultDB) extends Actor with ActorLogging
       log.info("PoisonPill sent to dbService, Abort sent to parent.")
   }
 
-
-
   def stop(): Unit = {
     log.info("Worker is stopped")
     context.stop(self)
