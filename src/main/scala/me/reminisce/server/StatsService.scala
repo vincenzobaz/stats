@@ -59,23 +59,37 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
               game => {
                 insertDB {
                   StatsProcessingService.InsertEntity(game)
-               }
+                }
               } 
             }
           }
+        } ~ path("computeStatistics"){
+          get{
+            parameters("userID"){
+              (userID) =>
+                computeStat{
+                  StatsProcessingService.ComputeStatistics(userID)
+            }
         }
+      }   
+    }
   }
     
   private def testDB(message: RestMessage): Route = {
     
-    val dummyService = context.actorOf(StatsProcessingService.props(db))
-    ctx => perRequest(ctx, dummyService, message)
+    val statsProcessingService = context.actorOf(StatsProcessingService.props(db))
+    ctx => perRequest(ctx, statsProcessingService, message)
   }
 
   private def insertDB(message: RestMessage) : Route = {
   
-    val dummyService = context.actorOf(StatsProcessingService.props(db))
-    ctx => perRequest(ctx, dummyService, message)
+    val statsProcessingService = context.actorOf(StatsProcessingService.props(db))
+    ctx => perRequest(ctx, statsProcessingService, message)
+  }
+  private def computeStat(message: RestMessage) : Route = {
+
+    val statsProcessingService = context.actorOf(StatsProcessingService.props(db))
+    ctx => perRequest(ctx, statsProcessingService, message)
   }
 }
 

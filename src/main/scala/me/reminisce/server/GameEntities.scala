@@ -363,7 +363,68 @@ object GameEntities {
   implicit val tileHandler: BSONHandler[BSONDocument, Tile] = Macros.handler[Tile]
   implicit val boardHandler: BSONHandler[BSONDocument, Board] = Macros.handler[Board]
 
+// Change the format of the Game that is stored in the DB
 implicit object GameWriter extends BSONDocumentWriter[Game] {
+    def write(game: Game) : BSONDocument = {
+      val Game(id, 
+        player1, player2, 
+        player1Board, player2Board, 
+        status, 
+        playerTurn, 
+        player1Scores, player2Scores,
+        boardState,
+        player1AvailableMoves, player2AvailableMoves,
+        wonBy,
+        creationTime) = game
+      BSONDocument(
+        "_id" -> id,
+        "player1" -> player1,
+        "player2" -> player2,
+        s"${player1}_Board" -> player1Board,
+        s"${player2}_Board" -> player2Board,
+        "status" -> status,
+        "playerTurn" -> playerTurn,
+        s"${player1}_Scores"-> player1Scores,
+        s"${player2}_Scores" -> player2Scores,
+        "boardState" -> boardState,
+        s"${player1}_AvailableMoves" -> player1AvailableMoves,
+        s"${player2}_AvailableMoves" -> player2AvailableMoves,
+        "wonBy" -> wonBy,
+        "creationTime" -> creationTime
+        )
+    }
+  }
+
+ implicit object GameReader extends BSONDocumentReader[Game] {
+    def read(doc: BSONDocument) : Game = {
+      val id = doc.getAs[String]("_id").get
+      val player1 = doc.getAs[String]("player1").get
+      val player2 = doc.getAs[String]("player2").get
+      val player1Board = doc.getAs[Board](s"${player1}_Board").get
+      val player2Board = doc.getAs[Board](s"${player2}_Board").get
+      val status = doc.getAs[String]("String").get
+      val playerTurn = doc.getAs[Int]("playerTurn").get
+      val player1Scores = doc.getAs[Int](s"${player1}_Scores").get
+      val player2Scores = doc.getAs[Int](s"${player2}_Scores").get
+      val boardState = doc.getAs[List[List[Score]]]("boardState").get
+      val player1AvailableMoves = doc.getAs[List[Move]](s"${player1}_AvailableMoves").get
+      val player2AvailableMoves = doc.getAs[List[Move]](s"${player2}_AvailableMoves").get
+      val wonBy = doc.getAs[Int]("wonBy").get
+      val creationTime = doc.getAs[Int]("creationTime").get
+      Game(id, 
+        player1, player2, 
+        player1Board, player2Board, 
+        status, 
+        playerTurn, 
+        player1Scores, player2Scores,
+        boardState,
+        player1AvailableMoves, player2AvailableMoves,
+        wonBy,
+        creationTime)
+    }
+  }
+  /*
+  implicit object GameWriter extends BSONDocumentWriter[Game] {
     def write(game: Game) : BSONDocument = {
       val Game(id, 
         player1, player2, 
@@ -419,8 +480,8 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
         player1AvailableMoves, player2AvailableMoves,
         wonBy,
         creationTime)
-    }
-  }
+    }*/
+  
   
 
 }

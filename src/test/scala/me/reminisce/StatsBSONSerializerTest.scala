@@ -66,7 +66,7 @@ class StatsBSONSerializersTest extends FunSuite {
   }
 
   // ***** Stats *****
-  val stats = Stats("userID123", countWin, averageScore, countQuestion, Option("idStat456"))
+  val stats = Stats("userID123", Some(countWin), Some(averageScore), Some(countQuestion), Some("idStat456"))
   val docStats = BSONDocument(
     "userID" -> "userID123",
     "countWinnerGame" -> countWin,
