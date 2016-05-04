@@ -140,98 +140,49 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
   Some(CountWinnerGame(0, 0))
   }
 
-  def getAverageScore(userID: String) : Option[AverageScore] = {
-    val s1 = computeCountsForAverageScore(userID, 1)
-    //val s2 = computeCountsForAverageScore(userID, 2)
-    //println(s"s1: $s1 s2: $s2")
- /*   if ( s1._1 != null && s2._1 != null) {
-      AverageScore((s1._2 + s2._2) / s1._3 + s2._3)
-    } else {
-      AverageScore(2)
-    }
-    */
-    s1 match{
-      case Some(average) =>
-        Some(AverageScore(average))
-      case None =>
-        None
-    }
-   // Some(AverageScore(avg))
-    
-  }
   def computeCountCorrectQuestion(userID: String): Option[CountCorrectQuestion] = {
     // TODO
     Some(CountCorrectQuestion(0,0))
   }
 
-  def computeCountsForAverageScore(userID: String, player: Int): Option[Double] = {
-    /*val p = if (player == 1) "player1" else "player2"
-    val playerScores = if (player == 1) "$player1Scores" else "$player2Scores"
+  def getAverageScore(userID: String): Option[AverageScore] = {
     
-    val query = BSONDocument(
-      "aggregate" -> MongoDatabaseService.gameCollection,
-      "pipeline" -> BSONArray(
-        BSONDocument("$match" -> BSONDocument(
-          p -> userID,
-          "status" -> "ended")
-        ),
-        BSONDocument(
-          "$group" -> BSONDocument(
-            "_id" -> ("$" + p),
-            "count" -> BSONDocument("$sum" -> 1),
-            "sum" -> BSONDocument("$sum" -> playerScores)
-          )
-        )
-      )
-    )*/
-    val idScores = s"${userID}_Scores"
-    println(idScores)
+    // The name's field depends on the userID
+    val idScores = s"$$${userID}_Scores"
+    val idScores2 = "$" + userID + "_Scores"
 
+    println(idScores)
+  
     val unifiedQuery = BSONDocument(
       "aggregate" -> "toTest",
       "pipeline" -> BSONArray(
-        BSONDocument("$match" -> BSONDocument(
-          "$or" -> BSONArray(
-            BSONDocument("player1" -> userID), 
-            BSONDocument("player2" -> userID)
-          ),
-          "status" -> "ended")), 
+        BSONDocument(
+          "$match" -> BSONDocument(
+            "status" -> "ended")), 
         BSONDocument(
           "$group" -> BSONDocument(
             "_id" -> userID,
             "count" -> BSONDocument("$sum" -> 1),
-            "toto" -> BSONDocument("$sum" -> idScores),
-            "averageScore" -> BSONDocument("$avg" -> s"${userID}_Scores")
+            "averageScore" -> BSONDocument("$avg" -> idScores)
           )
         )
       )
     )
 
-  //var counts: (String, Int, Int) = (null ,0, 0)
-  var asd : Option[Double] = Some(0)
+  var average : Option[Double] = None
+
   val runner = Command.run(BSONSerializationPack)
   
   val s : Future[BSONDocument] = runner.apply(db, runner.rawCommand(unifiedQuery)).one[BSONDocument]
   s.onComplete{
     case Success(result) => 
-      println(result)
       result.get("result") match { 
         case Some(array: BSONArray) =>
-          println(array)
           array.get(0) match {
             case Some(doc: BSONDocument) =>
-              println(doc)
-              /*val id = doc.getAs[String]("_id").get
-              val count = doc.getAs[Int]("count").get
-              val sum = doc.getAs[Int]("sum").get 
-              counts = (id, count, sum)*/
-              val count = doc.getAs[Int]("count").get
-              //val sum = doc.getAs[Double]("toto").get
-              println(doc.getAs[Double]("averageScore"))
-              //asd = Some(sum / count)
-              //log.info(s"score average: $asd")
-              //log.info(s"Stats computed for user $userID as player $player: $counts")
-            case e => log.info(s"No results for the user $userID as player $player")
+              average = doc.getAs[Double]("averageScore")
+              println(average)
+            case e => log.info(s"No results for the user $userID")
           }
         case e =>
           log.info(s"Error: $e is not a BSONArray")
@@ -240,7 +191,13 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       log.info(s"The command has failed with error: $error")
   }
     Await.result(s, 5000 millis)
-    asd
-
+    
+    average match{
+      case Some(a) =>
+        log.info(s"$userID's average: $a")
+        Some(AverageScore(a))
+      case None =>
+        None
+    }
   }
 }
