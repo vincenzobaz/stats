@@ -3,6 +3,7 @@ package me.reminisce.statistics
 import reactivemongo.bson._
 import me.reminisce.server.GameEntities._
 
+
 object StatisticEntities {
 
   sealed trait Statistic
@@ -16,9 +17,9 @@ object StatisticEntities {
 
   case class Stats(
                     userID: String,
-                    countWinnerGame: CountWinnerGame,
-                    averageScore: AverageScore,
-                    countCorrectQuestion: CountCorrectQuestion,
+                    countWinnerGame: Option[CountWinnerGame],
+                    averageScore: Option[AverageScore],
+                    countCorrectQuestion: Option[CountCorrectQuestion],
                     _id: Option[String] = None
     ) extends Statistic with EntityMessage
 
@@ -29,7 +30,7 @@ object StatisticEntities {
   implicit val StatWriter: BSONDocumentWriter[Stats] = Macros.writer[Stats]
 
   implicit object StatsWriter extends BSONDocumentWriter[Statistic with EntityMessage] {
-    def write(stats: Statistic with EntityMessage): BSONDocument =
+    def write(stats: Statistic with EntityMessage ): BSONDocument =
       stats match {
         case Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id) =>
       BSONDocument(
@@ -49,9 +50,9 @@ object StatisticEntities {
       println(id) // TODO Why it is None ??!
 
       val userID = doc.getAs[String]("userID").get      
-      val countWinnerGame = doc.getAs[CountWinnerGame]("countWinnerGame").get
-      val averageScore = doc.getAs[AverageScore]("averageScore").get
-      val countCorrectQuestion = doc.getAs[CountCorrectQuestion]("countCorrectQuestion").get
+      val countWinnerGame = doc.getAs[CountWinnerGame]("countWinnerGame")
+      val averageScore = doc.getAs[AverageScore]("averageScore")
+      val countCorrectQuestion = doc.getAs[CountCorrectQuestion]("countCorrectQuestion")
 
       Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id)
     }
