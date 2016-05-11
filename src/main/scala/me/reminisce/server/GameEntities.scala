@@ -4,7 +4,7 @@ import me.reminisce.server.GameEntities.QuestionKind.QuestionKind
 import me.reminisce.server.GameEntities.SubjectType.SubjectType
 import me.reminisce.server.domain.RestMessage
 import reactivemongo.bson._
-
+import me.reminisce.model.InsertionMessages._
 
 object GameEntities {
 
@@ -24,7 +24,7 @@ object GameEntities {
     player2AvailableMoves: List[Move],
     wonBy: Int,
     creationTime: Int
-    ) extends EntityMessage {
+    ) extends Entity {
     override def toString(): String = s"GAME: players: $player1($player1Scores) vs $player2($player2Scores) : winner: $wonBy"
   }
 

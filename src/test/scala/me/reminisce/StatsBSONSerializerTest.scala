@@ -3,7 +3,7 @@ package me.reminisce
 import org.scalatest.FunSuite
 import me.reminisce.statistics.StatisticEntities._
 import reactivemongo.bson._
-
+import com.github.nscala_time.time.Imports._
 
 class StatsBSONSerializersTest extends FunSuite {
  
@@ -66,18 +66,32 @@ class StatsBSONSerializersTest extends FunSuite {
   }
 
   // ***** Stats *****
-  val stats = Stats("userID123", Some(countWin), Some(averageScore), Some(countQuestion), Some("idStat456"))
+
+  val now: DateTime = DateTime.now
+  println(s"now: $now")
+  val stats = Stats("userID123", Some(countWin), Some(averageScore), Some(countQuestion), Some(now), Some("idStat456"))
   val docStats = BSONDocument(
+    "_id" -> "idStat456",
     "userID" -> "userID123",
     "countWinnerGame" -> countWin,
     "averageScore" -> averageScore,
     "countCorrectQuestion" -> countQuestion,
-    "_id" -> "idStat456")
-
+    "computationTime" -> now
+    )
+ 
   test("StatsWrite"){
     val bson = BSON.writeDocument(stats)
-    assert(bson == docStats)
+    assert(bson.getAs[String]("_id") == docStats.getAs[String]("_id"))
+    assert(bson.getAs[String]("userID") == docStats.getAs[String]("userID"))
+    assert(bson.getAs[CountWinnerGame]("countWinnerGame") == docStats.getAs[CountWinnerGame]("countWinnerGame"))
+    assert(bson.getAs[AverageScore]("averageScore") == docStats.getAs[AverageScore]("averageScore"))
+    assert(bson.getAs[CountCorrectQuestion]("countCorrectQuestion") == docStats.getAs[CountCorrectQuestion]("countCorrectQuestion"))
+    println(s"bson: ${bson.getAs[DateTime]("computationTime")}")
+    println(s"doc: ${docStats.getAs[DateTime]("computationTime")}")
+    assert(bson.getAs[DateTime]("computationTime") == docStats.getAs[DateTime]("computationTime"))
+   // assert(bson == docStats)
   }
+  
   test("StatsRead"){
     val result = docStats.as[Stats]
     assert(result == stats)

@@ -11,6 +11,12 @@ import me.reminisce.server.GameEntities._
 import me.reminisce.server.jsonserializer.StatsFormatter
 import me.reminisce.statsProcessing.StatsProcessingService
 import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
+import me.reminisce.model.InsertionMessages._
+import me.reminisce.model.ComputationMessages._
+import me.reminisce.model.RetrievingMessages._
+import me.reminisce.inserting.InsertionService
+import me.reminisce.computing.ComputationService
+import me.reminisce.retrieving.RetrievingService
 
 object StatsService
 
@@ -49,7 +55,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         parameters("userID"){
           (userID) =>
             testDB{
-              StatsProcessingService.GetStatistics(userID)
+              GetStatistics(userID)
             }
         }
       }   
@@ -58,7 +64,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
             entity(as[Game]) {
               game => {
                 insertDB {
-                  StatsProcessingService.InsertEntity(game)
+                  InsertEntity(game)
                 }
               } 
             }
@@ -68,7 +74,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
             parameters("userID"){
               (userID) =>
                 computeStat{
-                  StatsProcessingService.ComputeStatistics(userID)
+                  ComputeStatistics(userID)
             }
         }
       }   
@@ -77,19 +83,19 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     
   private def testDB(message: RestMessage): Route = {
     
-    val statsProcessingService = context.actorOf(StatsProcessingService.props(db))
-    ctx => perRequest(ctx, statsProcessingService, message)
+    val retrievingService = context.actorOf(RetrievingService.props(db))
+    ctx => perRequest(ctx, retrievingService, message)
   }
 
   private def insertDB(message: RestMessage) : Route = {
   
-    val statsProcessingService = context.actorOf(StatsProcessingService.props(db))
-    ctx => perRequest(ctx, statsProcessingService, message)
+    val insertionService = context.actorOf(InsertionService.props(db))
+    ctx => perRequest(ctx, insertionService, message)
   }
   private def computeStat(message: RestMessage) : Route = {
 
-    val statsProcessingService = context.actorOf(StatsProcessingService.props(db))
-    ctx => perRequest(ctx, statsProcessingService, message)
+    val computationService = context.actorOf(ComputationService.props(db))
+    ctx => perRequest(ctx, computationService, message)
   }
 }
 

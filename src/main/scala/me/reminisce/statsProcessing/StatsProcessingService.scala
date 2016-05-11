@@ -20,7 +20,10 @@ object StatsProcessingService {
 }
 
 class StatsProcessingService(database: DefaultDB) extends Actor with ActorLogging {
-
+   def receive : Receive = {
+    case _ => ???
+  }
+  /*
   import StatsProcessingService._
 
   def receive : Receive = waiting
@@ -109,4 +112,5 @@ class StatsProcessingService(database: DefaultDB) extends Actor with ActorLoggin
     log.info("Unexpected message has been received in gettingStats state")
     context.become(waiting)
   }
+  */
 }

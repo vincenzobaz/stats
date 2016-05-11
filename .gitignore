@@ -33,6 +33,9 @@ project/plugins/project/
 .classpath
 .project
 .settings/
+bin/
+.cache-main
+.cache-tests
 
 #Python scripts
 

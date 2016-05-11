@@ -16,8 +16,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
 import scala.util.{Failure, Success}
+
+import com.github.nscala_time.time.Imports._
+
 
 
 /**
@@ -45,18 +47,21 @@ import scala.util.{Failure, Success}
     */
     def props(db: DefaultDB): Props =
     Props(new MongoDatabaseService(db))
-
+/*
     case class InsertEntity(entity: EntityMessage)
     case class ComputeStats(userID: String)
     case class InsertStats(stats: Statistic, collection: String)
-
+*/
   }
 
 // TODO: use workers to compute each sub-stats -> send the result via message -> avoid to wait for the future
 
 
 class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
-
+ def receive : Receive = {
+    case _ => ???
+  }
+/*
   import MongoDatabaseService._
   import me.reminisce.server.GameEntities._
   import me.reminisce.statistics.StatisticEntities._
@@ -69,9 +74,9 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
     case ComputeStats(userID) =>
       val countWinnerGame = computeCountWinnerGame(userID)
       val avgScore = getAverageScore(userID)
-      val countCorrectQuestion = computeCountCorrectQuestion(userID)
-   
+      val countCorrectQuestion = computeCountCorrectQuestion(userID)     
       val stats = Stats(userID, countWinnerGame, avgScore, countCorrectQuestion)
+      println(stats)
       context.parent ! StatsProcessingWorker.InsertStat(stats)
     case StatsProcessingService.GetStatistics(userID) =>
       retrieveStats(userID)
@@ -169,28 +174,29 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       )
     )
 
-  var average : Option[Double] = None
+    var average : Option[Double] = None
 
-  val runner = Command.run(BSONSerializationPack)
-  
-  val s : Future[BSONDocument] = runner.apply(db, runner.rawCommand(unifiedQuery)).one[BSONDocument]
-  s.onComplete{
-    case Success(result) => 
-      result.get("result") match { 
-        case Some(array: BSONArray) =>
-          array.get(0) match {
-            case Some(doc: BSONDocument) =>
-              average = doc.getAs[Double]("averageScore")
-              println(average)
-            case e => log.info(s"No results for the user $userID")
-          }
-        case e =>
-          log.info(s"Error: $e is not a BSONArray")
+    val runner = Command.run(BSONSerializationPack)
+
+    val s : Future[BSONDocument] = runner.apply(db, runner.rawCommand(unifiedQuery)).one[BSONDocument]
+    s.onComplete{
+      case Success(result) => 
+        result.get("result") match { 
+          case Some(array: BSONArray) =>
+            array.get(0) match {
+              case Some(doc: BSONDocument) =>
+                average = doc.getAs[Double]("averageScore")
+                println(average)
+              case e => log.info(s"No results for the user $userID")
+            }
+          case e =>
+            log.info(s"Error: $e is not a BSONArray")
+      }    
+      case error =>
+        log.info(s"The command has failed with error: $error")
     }    
-    case error =>
-      log.info(s"The command has failed with error: $error")
-  }
-    Await.result(s, 5000 millis)
+
+    Await.result(s, scala.concurrent.duration.Duration(5000, MILLISECONDS)) //ambiguity with nscalatime
     
     average match{
       case Some(a) =>
@@ -199,5 +205,6 @@ class MongoDatabaseService(db: DefaultDB) extends DatabaseService {
       case None =>
         None
     }
-  }
+ }*/ 
 }
+

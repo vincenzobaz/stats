@@ -2,43 +2,68 @@ package me.reminisce.statistics
 
 import reactivemongo.bson._
 import me.reminisce.server.GameEntities._
+import com.github.nscala_time.time.Imports._
+import me.reminisce.model.InsertionMessages._
 
 
 object StatisticEntities {
 
-  sealed trait Statistic
+  sealed trait Statistic  
   
   case class CountWinnerGame(won: Int, lost: Int) extends Statistic
   case class AverageScore(average: Double) extends Statistic
   case class CountCorrectQuestion(correct: Int, wrong: Int) extends Statistic
 
-  // TODO Option[] for each field excepting the userID
-  // TODO Add a field "Date"
+  /*
+  Stats to compute:
+  - number of game played -> CountWinnerGame
+  - number of question answered -> CountCorrectQuestion
+  - score average -> AverageScore
+  - Best score
+  - ... ?
+  */
 
   case class Stats(
                     userID: String,
                     countWinnerGame: Option[CountWinnerGame],
                     averageScore: Option[AverageScore],
                     countCorrectQuestion: Option[CountCorrectQuestion],
+                    computationDate: Option[DateTime] = Some(DateTime.now),
                     _id: Option[String] = None
-    ) extends Statistic with EntityMessage
+    ) extends Statistic with Entity
 
   implicit val gameResumeHandler: BSONHandler[BSONDocument, CountWinnerGame] = Macros.handler[CountWinnerGame]
   implicit val avgScoreHandler: BSONHandler[BSONDocument, AverageScore] = Macros.handler[AverageScore]
   implicit val questionResumeHandler: BSONHandler[BSONDocument, CountCorrectQuestion] = Macros.handler[CountCorrectQuestion]
  
+  implicit object DatetimeReader extends BSONReader[BSONDateTime, DateTime]{
+      def read(bson: BSONDateTime): DateTime = {
+        val time = new DateTime(bson.value)
+        println(s"Read: $time")
+        time
+      }
+  }
+
+  implicit object DatetimeWriter extends BSONWriter[DateTime, BSONDateTime]{
+      def write(t: DateTime): BSONDateTime = {
+        println(s"write: ${t.getMillis}")
+        BSONDateTime(t.getMillis)
+      }
+}
+
   implicit val StatWriter: BSONDocumentWriter[Stats] = Macros.writer[Stats]
 
-  implicit object StatsWriter extends BSONDocumentWriter[Statistic with EntityMessage] {
-    def write(stats: Statistic with EntityMessage ): BSONDocument =
+  implicit object StatsWriter extends BSONDocumentWriter[Statistic with Entity] {
+    def write(stats: Statistic with Entity): BSONDocument =
       stats match {
-        case Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id) =>
+        case Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, time, id) =>
       BSONDocument(
         "_id" -> id,
         "userID" -> userID,
         "countWinnerGame" -> countWinnerGame,
         "averageScore" -> averageScore,
-        "countCorrectQuestion" -> countCorrectQuestion
+        "countCorrectQuestion" -> countCorrectQuestion,
+        "computationTime" -> time
       )
     }
   }
@@ -53,8 +78,9 @@ object StatisticEntities {
       val countWinnerGame = doc.getAs[CountWinnerGame]("countWinnerGame")
       val averageScore = doc.getAs[AverageScore]("averageScore")
       val countCorrectQuestion = doc.getAs[CountCorrectQuestion]("countCorrectQuestion")
-
-      Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, id)
+      val computationTime = doc.getAs[DateTime]("computationTime")
+      println("Time in statreader "+computationTime)
+      Stats(userID, countWinnerGame, averageScore, countCorrectQuestion, computationTime, id)
     }
   }
 

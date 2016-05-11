@@ -3,13 +3,15 @@ package me.reminisce.statsProcessing
 import akka.actor._
 import me.reminisce.server.GameEntities._
 import me.reminisce.statistics.StatisticEntities._
+import me.reminisce.server.domain.RestMessage
+
 import reactivemongo.api.DefaultDB
 
 object StatsProcessingWorker{
 
   case object Done
   case object Abort
-  case class ResultStat(stat: Stats)
+  case class ResultStat(stat: Stats) extends RestMessage
   case class InsertStat(stat: Statistic)
 
   def props(database: DefaultDB): Props =
@@ -18,7 +20,10 @@ object StatsProcessingWorker{
 
 class StatsProcessingWorker(database: DefaultDB) extends Actor with ActorLogging{
   import StatsProcessingWorker._
-  
+  def receive : Receive = {
+    case _ => ???
+  }
+  /*
   val dbService = context.actorOf(MongoDatabaseService.props(database))
 
   def receive = {
@@ -62,4 +67,5 @@ class StatsProcessingWorker(database: DefaultDB) extends Actor with ActorLogging
         context.parent ! Abort
     }    
   }
+  */
 }
