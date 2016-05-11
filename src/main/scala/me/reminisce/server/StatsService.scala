@@ -9,7 +9,6 @@ import reactivemongo.api.DefaultDB
 
 import me.reminisce.server.GameEntities._
 import me.reminisce.server.jsonserializer.StatsFormatter
-import me.reminisce.statsProcessing.StatsProcessingService
 import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
 import me.reminisce.model.InsertionMessages._
 import me.reminisce.model.ComputationMessages._
