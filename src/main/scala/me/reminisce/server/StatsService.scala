@@ -97,4 +97,3 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     ctx => perRequest(ctx, computationService, message)
   }
 }
-

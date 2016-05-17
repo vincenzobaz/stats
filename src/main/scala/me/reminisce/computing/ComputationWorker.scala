@@ -93,4 +93,3 @@ class ComputationWorker(database: DefaultDB) extends Actor with ActorLogging {
     }    
   }
 }
-
