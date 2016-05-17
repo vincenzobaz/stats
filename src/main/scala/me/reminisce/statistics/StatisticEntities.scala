@@ -4,7 +4,8 @@ import reactivemongo.bson._
 import me.reminisce.server.GameEntities._
 import com.github.nscala_time.time.Imports._
 import me.reminisce.model.InsertionMessages._
-
+import me.reminisce.server.domain.RestMessage
+import me.reminisce.statistics.StatisticEntities.QuestionsBreakDownKind.QuestionsBreakDownKind
 
 object StatisticEntities {
 /*
@@ -26,7 +27,7 @@ object StatisticEntities {
     ago: Int, 
     amount: Int, 
     corect: Int, 
-    percentCorrect: double, 
+    percentCorrect: Double, 
     questionsBreakDown: List[QuestionsBreakDown], 
     gamePslayedAgaints: List[GamesPlayedAgainst]
     )
@@ -38,6 +39,20 @@ object StatisticEntities {
     lost: Int
     )
 
+  case class QuestionsBreakDown(
+    questionBDtype: QuestionsBreakDownKind,
+    totalAmount: Int,
+    correct: Int,
+    percentCorrect: Double
+    )
+
+  object QuestionsBreakDownKind extends Enumeration {
+    type QuestionsBreakDownKind = Value
+    val MC = Value("MC")
+    val TL = Value("TL ")
+    val GEO = Value("GEO")
+    val ORD = Value("ORD")
+  } 
 /*
     ######################
 */

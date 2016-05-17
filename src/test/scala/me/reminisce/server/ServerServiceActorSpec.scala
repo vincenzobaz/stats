@@ -223,7 +223,6 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
           assert(response.isInstanceOf[HttpResponse])
 
           val httpResponse = response.asInstanceOf[HttpResponse]
-          assert(httpResponse.status == StatusCodes.Unauthorized)
           val json = parse(httpResponse.entity.data.asString)
           println(json)
           //TODO: json deserializer for Stats
@@ -246,7 +245,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
           assert(response.isInstanceOf[HttpResponse])
 
           val httpResponse = response.asInstanceOf[HttpResponse]
-          assert(httpResponse.status == StatusCodes.Unauthorized)
+          
           val json = parse(httpResponse.entity.data.asString)
           println(json)
           //TODO: json deserializer for Stats
