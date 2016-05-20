@@ -12,24 +12,26 @@ object StatisticEntities {
     ##### NEW API ########
 */
   
-  case class StatResponse(userID: String, frequencies: FrequencyOfPlays) 
-    extends RestMessage
+  case class StatResponse(
+    userID: String, 
+    frequencies: FrequencyOfPlays
+    ) extends RestMessage
 
   case class FrequencyOfPlays(
-    days: StatsOnInterval, 
-    week: StatsOnInterval, 
-    month: StatsOnInterval, 
-    year: StatsOnInterval, 
-    allTime: StatsOnInterval
+    days: Option[StatsOnInterval], 
+    week: Option[StatsOnInterval], 
+    month: Option[StatsOnInterval], 
+    year: Option[StatsOnInterval], 
+    allTime: Option[StatsOnInterval]
     )
 
   case class StatsOnInterval(
     ago: Int, 
     amount: Int, 
-    corect: Int, 
+    correct: Int, 
     percentCorrect: Double, 
     questionsBreakDown: List[QuestionsBreakDown], 
-    gamePslayedAgaints: List[GamesPlayedAgainst]
+    gamesPlayedAgainst: List[GamesPlayedAgainst]
     )
 
   case class GamesPlayedAgainst(
@@ -40,7 +42,7 @@ object StatisticEntities {
     )
 
   case class QuestionsBreakDown(
-    questionBDtype: QuestionsBreakDownKind,
+    questionsBreakDownKind: QuestionsBreakDownKind,
     totalAmount: Int,
     correct: Int,
     percentCorrect: Double
@@ -53,6 +55,38 @@ object StatisticEntities {
     val GEO = Value("GEO")
     val ORD = Value("ORD")
   } 
+
+  implicit object QuestionsBreakDownReader extends BSONDocumentReader[QuestionsBreakDown]{
+    def read(doc: BSONDocument) : QuestionsBreakDown = {
+      val questionBDKind = QuestionsBreakDownKind.withName(doc.getAs[String]("questionsBreakDownKind").get)
+      val totalAmount = doc.getAs[Int]("totalAmount").get
+      val correct = doc.getAs[Int]("correct").get
+      val percentCorrect = doc.getAs[Double]("percentCorrect").get
+      QuestionsBreakDown(questionBDKind, totalAmount, correct, percentCorrect)
+    }
+  }
+
+  implicit object QuestionsBreakDownWriter extends BSONDocumentWriter[QuestionsBreakDown]{
+    def write(question: QuestionsBreakDown): BSONDocument = {
+      val QuestionsBreakDown(kind, total, correct, percent) = question
+      BSONDocument(
+      "questionsBreakDownKind" -> kind.toString,
+      "totalAmount" -> total,
+      "correct" -> correct,
+      "percentCorrect" -> percent
+      )
+    }
+  }
+  //implicit val questionBreakDownTypeHandler: BSONHandler[BSONDocument, QuestionsBreakDownKind] = Macros.handler[QuestionsBreakDownKind] 
+  //implicit val questionsBreakDownHandler: BSONHandler[BSONDocument, QuestionsBreakDown] = Macros.handler[QuestionsBreakDown]
+  implicit val gamesPlayedAgainstHandler: BSONHandler[BSONDocument, GamesPlayedAgainst] = Macros.handler[GamesPlayedAgainst]  
+  implicit val statsOnIntervalHandler: BSONHandler[BSONDocument, StatsOnInterval] = Macros.handler[StatsOnInterval]
+  implicit val frequencyOfPlaysHandler: BSONHandler[BSONDocument, FrequencyOfPlays] = Macros.handler[FrequencyOfPlays]
+  implicit val StatResponseHandler: BSONHandler[BSONDocument, StatResponse] = Macros.handler[StatResponse]
+ 
+
+
+
 /*
     ######################
 */
@@ -72,12 +106,12 @@ object StatisticEntities {
   */
 
   case class Stats(
-                    userID: String,
-                    countWinnerGame: Option[CountWinnerGame],
-                    averageScore: Option[AverageScore],
-                    countCorrectQuestion: Option[CountCorrectQuestion],
-                    computationDate: Option[DateTime] = Some(DateTime.now),
-                    _id: Option[String] = None
+    userID: String,
+    countWinnerGame: Option[CountWinnerGame],
+    averageScore: Option[AverageScore],
+    countCorrectQuestion: Option[CountCorrectQuestion],
+    computationTime: Option[DateTime] = Some(DateTime.now),
+    _id: Option[String] = None
     ) extends Statistic with Entity
 
   implicit val gameResumeHandler: BSONHandler[BSONDocument, CountWinnerGame] = Macros.handler[CountWinnerGame]

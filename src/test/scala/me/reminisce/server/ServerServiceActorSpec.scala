@@ -210,10 +210,15 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
                    "creationTime": 1456062881638
                  }"""
 
-      val postRequest = new HttpRequest(method = HttpMethods.POST, entity = gameJson)
+      val postRequest = new HttpRequest(
+                          uri = url, 
+                          method = HttpMethods.POST, 
+                          entity = gameJson,
+                          headers = List(`Content-Type`(`application/json`))
+                          )
       assert(postRequest.method == HttpMethods.POST)
       
-      testService ! postRequest.withHeaders(List(`Content-Type`(`application/json`)))
+      testService ! postRequest
       
       val responseOpt = Option(receiveOne(Duration(10, TimeUnit.SECONDS)))
       
