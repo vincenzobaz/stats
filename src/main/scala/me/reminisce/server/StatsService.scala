@@ -42,12 +42,11 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     
     import GameFormat._
 
-    path("hello") {
+    path("hello"){
       get {
         complete {
           <h1> Hi guys ! :) </h1>
         }
-
       }
     } ~ path("getStatistics"){
       get{
@@ -60,7 +59,6 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
       }   
     } ~ path("insertEntity"){
           post{
-            println("insertEntity")
             extract(_.request.headers).map(println)
             entity(as[Game]) {
               game => {
@@ -70,16 +68,31 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
               } 
             }
           }
-        } ~ path("computeStatistics"){
+    } ~ path("computeStatistics"){
           get{
             parameters("userID"){
               (userID) =>
                 computeStat{
                   ComputeStatistics(userID)
+                }
             }
+          }
+      } ~ path("stats"){
+        get{
+          parameterSeq {
+            params =>        
+              parseParameters(params) match {
+                case Some(rs)=>  
+                  println(rs)
+                  retrieveStats(rs)
+                case None =>
+                  complete{
+                    "Unknown or malformed parameters"
+                  }
+              }           
+          }
         }
       }   
-    }
   }
     
   private def testDB(message: RestMessage): Route = {
@@ -97,5 +110,42 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
 
     val computationService = context.actorOf(ComputationService.props(db))
     ctx => perRequest(ctx, computationService, message)
+  }
+  private def retrieveStats(message: RestMessage) : Route = {
+
+    val retrievingService = context.actorOf(RetrievingService.props(db))
+    ctx => perRequest(ctx, retrievingService, message)
+  }
+
+  def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {
+    
+    val IsNumeric = """^(\d+)$""".r
+    val (userID, frequency, allTime, error) = params.foldLeft(("", List[(String, Int)](), 0, 0)){
+      case (acc, (key, value)) => 
+        key match {
+          case "userId" if acc._1.isEmpty => (acc._1 + value, acc._2, acc._3, acc._4)
+          case "frequency" =>
+            value.split(":") match {
+              case Array(k: String, IsNumeric(i)) if isValidFrequency(k, acc._2) => 
+                (acc._1, acc._2 :+ (k, i.toInt), acc._3, acc._4)
+              case _ => 
+                (acc._1, acc._2, acc._3, acc._4 + 1) 
+            }             
+          case "allTime" => (acc._1, acc._2, acc._3 + 1, acc._4)
+          case _ => (acc._1, acc._2, acc._3, acc._4 + 1)
+        }      
+    }
+    println(s"$userID, $frequency, $allTime")
+
+    lazy val a = allTime != 0
+    error match {
+      case 0 => Some(RetrieveStats(userID, frequency, a))
+      case _ => None
+    }
+  }
+
+  def isValidFrequency(f: String, frequencies : List[(String, Int)]) : Boolean = {
+    val possibleFrequency: Set[String] = Set("day", "week", "month", "year")
+    possibleFrequency(f) && frequencies.forall{case (a, _) => a != f}
   }
 }

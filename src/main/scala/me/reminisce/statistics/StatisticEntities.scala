@@ -18,11 +18,11 @@ object StatisticEntities {
     ) extends RestMessage
 
   case class FrequencyOfPlays(
-    days: Option[StatsOnInterval], 
-    week: Option[StatsOnInterval], 
-    month: Option[StatsOnInterval], 
-    year: Option[StatsOnInterval], 
-    allTime: Option[StatsOnInterval]
+    days: Option[StatsOnInterval] = None, 
+    week: Option[StatsOnInterval] = None, 
+    month: Option[StatsOnInterval] = None, 
+    year: Option[StatsOnInterval] = None, 
+    allTime: Option[StatsOnInterval] = None
     )
 
   case class StatsOnInterval(

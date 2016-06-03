@@ -5,6 +5,7 @@ import me.reminisce.server.domain.RestMessage
 import reactivemongo.api.DefaultDB
 import me.reminisce.computing.ComputationService
 import me.reminisce.model.ComputationMessages._
+import me.reminisce.statistics.StatisticEntities._
 
 object RetrievingService {
   def props(database: DefaultDB):Props =
@@ -17,12 +18,14 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
   def receive: Receive = waitingForMessages(null) 
 
   def waitingForMessages(client: ActorRef): Receive = {
+    case msg @ RetrieveStats(userID, frequencies, allTime) =>
+      sender ! StatisticsRetrieved(StatResponse(userID, FrequencyOfPlays()))
     case msg @ GetStatistics(userID) =>
       val worker = context.actorOf(RetrievingWorker.props(database))
       worker ! msg
       context.become(waitingForMessages(sender))
-    case msg @ StatisticsRetrieved(stat) =>
-      client ! msg
+    // case msg @ StatisticsRetrieved(stat) =>
+    //   client ! msg
     case Abort => 
       client ! StatisticsNotFound("Statistics not found")
     case o => log.info(s"Unexpected message ($o) received in RetrievingService")

@@ -25,11 +25,11 @@ class RetrievingWorker(database: DefaultDB) extends Actor with ActorLogging {
     case GetStatistics(userID) => 
       val client = sender
       log.info(s"retrieving stat")
-      retrieveStats(userID, client)
+      //retrieveStats(userID, client)
     case o => log.info(s"Unexpected message ($o) received in RetrievingWorker")
   }
 
-  def retrieveStats(userID: String, client: ActorRef): Unit = {
+  /*def retrieveStats(userID: String, client: ActorRef): Unit = {
     import me.reminisce.model.DatabaseCollection
     println(s"self: $self, client: $client")
     val query = BSONDocument(
@@ -56,6 +56,6 @@ class RetrievingWorker(database: DefaultDB) extends Actor with ActorLogging {
           log.info(s"Failure while getting stats. Error: $f ")
           client ! Abort
       }
-  }
+  }*/
 
 }
