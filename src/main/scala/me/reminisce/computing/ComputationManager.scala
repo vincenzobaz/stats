@@ -20,14 +20,13 @@ object ComputationManager {
   def props(database: DefaultDB, kind: IntervalKind): Props =
     Props(new ComputationManager(database, kind))
   }
-// TODO group the pattern match for the kind at the initialization
+
 class ComputationManager(database: DefaultDB, kind: IntervalKind) extends Actor with ActorLogging {
   val today = DateTime.now
   def receive: Receive = waitingForRequest 
 
   def waitingForRequest: Receive = {
     case ComputeStatsWithTimeline(userID, timeline, allTime) => 
-      println(s"BEGIN $kind  computation")
       val maxValue = getAgoValue(timeline)
       (0 to maxValue).foreach{ ago => 
         val worker = context.actorOf(ComputationWorker.props(database, kind, ago))
@@ -35,13 +34,12 @@ class ComputationManager(database: DefaultDB, kind: IntervalKind) extends Actor 
         worker ! ComputeStatsInInterval(userID, interval._1, interval._2)
       }
       context.become(WaitingForResponses(sender, maxValue))
-    case m => log.info(s"Unexpected message $m received in ComputationManager")
+    case m => log.info(s"Unexpected message $m received in waitingForRequest")
   }
 
   def WaitingForResponses(client: ActorRef, remaining: Int, stats: List[StatsOnInterval] = List()): Receive = {
     case ResponseStatOnInterval(s: StatsOnInterval) => 
       if (remaining - 1 == 0) {
-        log.info(s"Computation is complete for $kind")
         val sortedStats = (s+: stats).sortBy{
           case StatsOnInterval(ago, _, _, _, _, _) => ago
         }

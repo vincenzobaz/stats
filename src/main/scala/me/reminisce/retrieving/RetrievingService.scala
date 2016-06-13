@@ -23,23 +23,14 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
     case msg @ RetrieveStats(userID, frequencies, allTime) if DatabaseCollection.UseCache=>
       // TODO
       sender ! StatisticsRetrieved(StatResponse(userID, FrequencyOfPlays()))
+      
     case msg @ RetrieveStats(userID, frequencies, allTime)  =>
       log.info("No cache, need computation")
       val timeline = frequenciesToTimeline(userID, frequencies)
       val computationService = context.actorOf(ComputationService.props(database))
       computationService ! ComputeStatsWithTimeline(userID, timeline, allTime)
       context.become(waitingForComputation(sender))
-    
-      //TODO in a different state
-    /*case msg @ GetStatistics(userID) =>
-      val worker = context.actorOf(RetrievingWorker.props(database))
-      worker ! msg
-      context.become(waitingForMessages)
-    // case msg @ StatisticsRetrieved(stat) =>
-    //   client ! msg
-    case Abort => 
-      client ! StatisticsNotFound("Statistics not found")
-*/    
+  
     case o => log.info(s"Unexpected message ($o) received in RetrievingService")
   }
   

@@ -49,15 +49,6 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
           <h1> Hi guys ! :) </h1>
         }
       }
-    } ~ path("getStatistics"){
-      get{
-        parameters("userID"){
-          (userID) =>
-            testDB{
-              GetStatistics(userID)
-            }
-        }
-      }   
     } ~ path("insertEntity"){
           post{
             extract(_.request.headers).map(println)
@@ -69,16 +60,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
               } 
             }
           }
-    } ~ path("computeStatistics"){
-          get{
-            parameters("userID"){
-              (userID) =>
-                computeStat{
-                  ComputeStatistics(userID)
-                }
-            }
-          }
-      } ~ path("stats"){
+    } ~ path("stats"){
         get{
           parameterSeq {
             params =>        
@@ -96,30 +78,21 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
       }   
   }
     
-  private def testDB(message: RestMessage): Route = {
-    
-    val retrievingService = context.actorOf(RetrievingService.props(db))
-    ctx => perRequest(ctx, retrievingService, message)
-  }
-
   private def insertDB(message: RestMessage) : Route = {
-  
     val insertionService = context.actorOf(InsertionService.props(db))
     ctx => perRequest(ctx, insertionService, message)
   }
-  private def computeStat(message: RestMessage) : Route = {
+  /*private def computeStat(message: RestMessage) : Route = {
 
     val computationService = context.actorOf(ComputationService.props(db))
     ctx => perRequest(ctx, computationService, message)
-  }
+  }*/
   private def retrieveStats(message: RestMessage) : Route = {
-
     val retrievingService = context.actorOf(RetrievingService.props(db))
     ctx => perRequest(ctx, retrievingService, message)
   }
 
-  def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {
-    
+  def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {    
     lazy val IsNumeric = """^(\d+)$""".r
     val (userID, frequency, allTime, error) = params.foldLeft(("", List[(String, Int)](), 0, 0)){
       case (acc, (key, value)) => 
@@ -147,5 +120,4 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   private def isValidFrequency(f: String, frequencies : List[(String, Int)]) : Boolean = {
     possibleFrequency(f) && frequencies.forall{case (a, _) => a != f}
   }
-
 }

@@ -56,7 +56,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       }
       context.become(waitingComputation(sender, userID, FrequencyOfPlays(), managersMaps.size))   
     
-    // (in case of cache)
+    // use after inserting a game, in case of caching stats
     case ComputeStatistics(userID) =>
       computeStatisticsForID(userID)
       // TODO
@@ -66,28 +66,27 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
   }
 
   def waitingComputation(client: ActorRef, userID: String,acc: FrequencyOfPlays, remaining: Int): Receive = {
-    case DailyStats(days) =>
-      val FrequencyOfPlays(d, w, m, y, a) = acc
-      val newAcc = FrequencyOfPlays(days, w, m, y, a)
-      isComplete(userID, client, newAcc, remaining)
-    case WeeklyStats(weeks) =>
-      val FrequencyOfPlays(d, w, m, y, a) = acc
-      val newAcc = FrequencyOfPlays(d, weeks, m, y, a)
-      isComplete(userID, client, newAcc, remaining)
-    case MonthlyStats(months) =>
-      val FrequencyOfPlays(d, w, m, y, a) = acc
-      val newAcc = FrequencyOfPlays(d, w, months, y, a)
-      isComplete(userID, client, newAcc, remaining)
-    case YearlyStats(years) =>
-      val FrequencyOfPlays(d, w, m, y, a) = acc
-      val newAcc = FrequencyOfPlays(d, w, m, years, a)
-      isComplete(userID, client, newAcc, remaining)
-    case AllTimeStats(all) =>
-      val FrequencyOfPlays(d, w, m, y, a) = acc
-      val newAcc = FrequencyOfPlays(d, w, m, y, Some(all))
-      isComplete(userID, client, newAcc, remaining)
-    case o => 
-      log.info(s"Unexpected message $o received in waitingComputation state")
+    val FrequencyOfPlays(d, w, m, y, a) = acc
+
+    {
+      case DailyStats(days) =>      
+        val newAcc = FrequencyOfPlays(days, w, m, y, a)
+        isComplete(userID, client, newAcc, remaining)
+      case WeeklyStats(weeks) =>
+        val newAcc = FrequencyOfPlays(d, weeks, m, y, a)
+        isComplete(userID, client, newAcc, remaining)
+      case MonthlyStats(months) =>
+        val newAcc = FrequencyOfPlays(d, w, months, y, a)
+        isComplete(userID, client, newAcc, remaining)
+      case YearlyStats(years) =>
+        val newAcc = FrequencyOfPlays(d, w, m, years, a)
+        isComplete(userID, client, newAcc, remaining)
+      case AllTimeStats(all) =>
+        val newAcc = FrequencyOfPlays(d, w, m, y, Some(all))
+        isComplete(userID, client, newAcc, remaining)
+      case o => 
+        log.info(s"Unexpected message $o received in waitingComputation state")
+    }
   }
 
   def isComplete(userID: String, client: ActorRef, acc: FrequencyOfPlays, remaining: Int): Unit = {
@@ -116,36 +115,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         service ! PoisonPill
       }
   }
-
-  def waitingStats(client: ActorRef, stat: Stats, missingStats: Int) : Receive = {
-    case avgs @ AverageScore(average) =>
-      val Stats(userID, cwg, _, ccq, date, id) = stat
-      val newStat = Stats(userID, cwg, Some(avgs), ccq, date, id)
-      isComplete(client, newStat, missingStats)
-    case ccq @ CountCorrectQuestion(correct, wrong) => 
-      val Stats(userID, cwg, avg, _, date, id) = stat
-      val newStat = Stats(userID, cwg, avg, Some(ccq), date, id)
-      isComplete(client, newStat, missingStats)
-    case cwg @ CountWinnerGame(won, lost) => 
-      val Stats(userID, _, avg, ccq, date, id) = stat
-      val newStat = Stats(userID, Some(cwg), avg, ccq, date, id)
-      isComplete(client, newStat, missingStats)
-    case Abort => log.info("An error occured when computing statistics")
-    case o => 
-      log.info(s"[ComputationService] Unexpected message  $o received in waitingStats state")
-  }
-  def isComplete(client: ActorRef, stat: Stats, missingStats: Int): Unit = {
-    val newMissingStats = missingStats -1
-    if (newMissingStats == 0){
-        //TODO stats complete -> insert it on db 
-        log.info(s"computation completed:  $stat" )
-        insertStat(client, stat)
-      } else {
-        log.info(s"Remaining computation: $newMissingStats")
-        context.become(waitingStats(client, stat, newMissingStats))
-      }
-  }
-
+  // TODO: with the new stats object
   def insertStat(client: ActorRef, stat: Stats){
   /*  val service = context.actorOf(InsertionService.props(database))
     service ! InsertEntity(stat)
@@ -190,9 +160,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
           array.get(0) match {
             case Some(doc: BSONDocument) =>
               val birthday = doc.getAs[Long]("birthday")
-              val lifetime = howManyToCompute(userID, birthday.getOrElse(DateTime.now.getMillis))
-              
-              
+              val lifetime = howManyToCompute(userID, birthday.getOrElse(DateTime.now.getMillis))              
             case e => 
               log.info(s"No result fot the user $userID")
           }
@@ -203,6 +171,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         log.info(s"The command has failed with error: $error")
     }
   }
+
   private def howManyToCompute(userID: String, birthday: Long): Timeline = {
     val today = DateTime.now
     val firstPlay = birthday.toDateTime
@@ -210,8 +179,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
     val weeks = Weeks.weeksBetween(firstPlay, today).getWeeks
     val months = Months.monthsBetween(firstPlay, today).getMonths
     val years = Years.yearsBetween(firstPlay, today).getYears
-    val ul = Timeline(userID, birthday, days, weeks, months, years)
-    println(ul)
-    ul
+    val timeline = Timeline(userID, birthday, days, weeks, months, years)
+    timeline
   }
 }

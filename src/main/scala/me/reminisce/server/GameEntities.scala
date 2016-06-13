@@ -376,6 +376,7 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
         player1AvailableMoves, player2AvailableMoves,
         wonBy,
         creationTime) = game
+      val won = if(wonBy == 1) player1 else player2
       BSONDocument(
         "_id" -> id,
         "player1" -> player1,
@@ -389,7 +390,7 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
         "boardState" -> boardState,
         s"${player1}_AvailableMoves" -> player1AvailableMoves,
         s"${player2}_AvailableMoves" -> player2AvailableMoves,
-        "wonBy" -> wonBy,
+        "wonBy" -> won,
         "creationTime" -> creationTime
         )
     }
@@ -409,7 +410,7 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
       val boardState = doc.getAs[List[List[Score]]]("boardState").get
       val player1AvailableMoves = doc.getAs[List[Move]](s"${player1}_AvailableMoves").get
       val player2AvailableMoves = doc.getAs[List[Move]](s"${player2}_AvailableMoves").get
-      val wonBy = doc.getAs[Int]("wonBy").get
+      val wonBy = if (doc.getAs[String]("wonBy").get == player1) 1 else 2
       val creationTime = doc.getAs[Int]("creationTime").get
       Game(id, 
         player1, player2, 
@@ -423,65 +424,4 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
         creationTime)
     }
   }
-  /*
-  implicit object GameWriter extends BSONDocumentWriter[Game] {
-    def write(game: Game) : BSONDocument = {
-      val Game(id, 
-        player1, player2, 
-        player1Board, player2Board, 
-        status, 
-        playerTurn, 
-        player1Scores, player2Scores,
-        boardState,
-        player1AvailableMoves, player2AvailableMoves,
-        wonBy,
-        creationTime) = game
-      BSONDocument(
-        "_id" -> id,
-        "player1" -> player1,
-        "player2" -> player2,
-        "player1Board" -> player1Board,
-        "player2Board" -> player2Board,
-        "status" -> status,
-        "playerTurn" -> playerTurn,
-        "player1Scores"-> player1Scores,
-        "player2Scores" -> player2Scores,
-        "boardState" -> boardState,
-        "player1AvailableMoves" -> player1AvailableMoves,
-        "player2AvailableMoves" -> player2AvailableMoves,
-        "wonBy" -> wonBy,
-        "creationTime" -> creationTime
-        )
-    }
-  }
- implicit object GameReader extends BSONDocumentReader[Game] {
-    def read(doc: BSONDocument) : Game = {
-      val id = doc.getAs[String]("_id").get
-      val player1 = doc.getAs[String]("player1").get
-      val player2 = doc.getAs[String]("player2").get
-      val player1Board = doc.getAs[Board]("player1Board").get
-      val player2Board = doc.getAs[Board]("player2Board").get
-      val status = doc.getAs[String]("String").get
-      val playerTurn = doc.getAs[Int]("playerTurn").get
-      val player1Scores = doc.getAs[Int]("player1Scores").get
-      val player2Scores = doc.getAs[Int]("player2Scores").get
-      val boardState = doc.getAs[List[List[Score]]]("boardState").get
-      val player1AvailableMoves = doc.getAs[List[Move]]("player1AvailableMoves").get
-      val player2AvailableMoves = doc.getAs[List[Move]]("player2AvailableMoves").get
-      val wonBy = doc.getAs[Int]("wonBy").get
-      val creationTime = doc.getAs[Int]("creationTime").get
-      Game(id, 
-        player1, player2, 
-        player1Board, player2Board, 
-        status, 
-        playerTurn, 
-        player1Scores, player2Scores,
-        boardState,
-        player1AvailableMoves, player2AvailableMoves,
-        wonBy,
-        creationTime)
-    }*/
-  
-  
-
 }
