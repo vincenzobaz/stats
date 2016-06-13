@@ -109,36 +109,31 @@ class StatsBSONSerializersTest extends FunSuite {
   }
   // ***** FrequencyOfPlays *****
 
-  val frequencyOfPlays = FrequencyOfPlays(Some(statsOnInterval), None, None, Some(statsOnInterval), Some(statsOnInterval))
+  val frequencyOfPlays = FrequencyOfPlays(List(statsOnInterval), List(), List(), List(statsOnInterval), Some(List(statsOnInterval)))
   val docFrequency = BSONDocument(
-    "days" -> statsOnInterval,
-    "year" -> statsOnInterval,
-    "allTime" -> statsOnInterval
+    "day" -> List(statsOnInterval),
+    "week" -> List[StatsOnInterval](),
+    "month" -> List[StatsOnInterval](),
+    "year" -> List(statsOnInterval),
+    "allTime" -> List(statsOnInterval)
     )
 
   test("FrequencyOfPlays Write") {
     val bson = BSON.writeDocument(frequencyOfPlays)
     
     val testElem: (String => Unit) = (elem: String) => {
-      val written = bson.getAs[StatsOnInterval](elem)
-      val given = docFrequency.getAs[StatsOnInterval](elem)
-      assert(written == given)
-      /*(written, given) match {
-        case (Some(wrt), Some(gvn)) =>
-          assert(wrt.ago == gvn.ago)
-          assert(wrt.amount == gvn.amount)
-          assert(wrt.correct == gvn.correct)
-          assert(wrt.percentCorrect == gvn.percentCorrect)
-          assert(wrt.questionsBreakDown == gvn.questionsBreakDown)
-          assert(wrt.gamesPlayedAgainst == gvn.gamesPlayedAgainst)
+      val written = bson.getAs[List[StatsOnInterval]](elem)
+      val given = docFrequency.getAs[List[StatsOnInterval]](elem)
+      (written, given) match {
+        case (Some(wrt: List[StatsOnInterval]), Some(gvn: List[StatsOnInterval])) =>
+
           assert(wrt == gvn) 
         case (None, None) =>
           assert(true)
         case _ => fail()
-        } */
-      }
-    
-    val list = List("days", "week", "month", "year", "allTime")
+      } 
+    }
+    val list = List("day", "week", "month", "year", "allTime")
     list.map(testElem)    
  }  
 
