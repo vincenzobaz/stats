@@ -9,4 +9,5 @@ object RetrievingMessages {
   case class StatisticsRetrieved(stat: StatResponse) extends RestMessage
   case class StatisticsNotFound(message: String) extends RestMessage
   case class RetrieveStats(userID: String, frequency: List[(String, Int)], allTime: Boolean) extends RestMessage
-}
+
+  }

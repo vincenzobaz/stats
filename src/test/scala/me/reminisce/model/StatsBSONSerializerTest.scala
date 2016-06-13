@@ -270,5 +270,4 @@ class StatsBSONSerializersTest extends FunSuite {
     val result = bson.as[Stats]
     assert(stats == result) 
   }
-
 }

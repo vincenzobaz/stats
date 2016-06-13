@@ -37,6 +37,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   def actorRefFactory: ActorContext
 
   val db: DefaultDB
+  lazy val possibleFrequency: Set[String] = Set("day", "week", "month", "year")
 
   val statsRoutes = {
     
@@ -119,7 +120,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
 
   def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {
     
-    val IsNumeric = """^(\d+)$""".r
+    lazy val IsNumeric = """^(\d+)$""".r
     val (userID, frequency, allTime, error) = params.foldLeft(("", List[(String, Int)](), 0, 0)){
       case (acc, (key, value)) => 
         key match {
@@ -135,7 +136,6 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
           case _ => (acc._1, acc._2, acc._3, acc._4 + 1)
         }      
     }
-    println(s"$userID, $frequency, $allTime")
 
     lazy val a = allTime != 0
     error match {
@@ -144,8 +144,8 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     }
   }
 
-  def isValidFrequency(f: String, frequencies : List[(String, Int)]) : Boolean = {
-    val possibleFrequency: Set[String] = Set("day", "week", "month", "year")
+  private def isValidFrequency(f: String, frequencies : List[(String, Int)]) : Boolean = {
     possibleFrequency(f) && frequencies.forall{case (a, _) => a != f}
   }
+
 }

@@ -7,6 +7,7 @@ import me.reminisce.model.InsertionMessages._
 import me.reminisce.server.domain.RestMessage
 import me.reminisce.statistics.StatisticEntities.QuestionsBreakDownKind.QuestionsBreakDownKind
 
+
 object StatisticEntities {
 /*
     ##### NEW API ########
@@ -18,11 +19,11 @@ object StatisticEntities {
     ) extends RestMessage
 
   case class FrequencyOfPlays(
-    days: Option[StatsOnInterval] = None, 
-    week: Option[StatsOnInterval] = None, 
-    month: Option[StatsOnInterval] = None, 
-    year: Option[StatsOnInterval] = None, 
-    allTime: Option[StatsOnInterval] = None
+    day: List[StatsOnInterval] = List(), 
+    week: List[StatsOnInterval] = List(), 
+    month: List[StatsOnInterval] = List(), 
+    year: List[StatsOnInterval] = List(), 
+    allTime: Option[List[StatsOnInterval]] = None
     )
 
   case class StatsOnInterval(
@@ -84,7 +85,14 @@ object StatisticEntities {
   implicit val frequencyOfPlaysHandler: BSONHandler[BSONDocument, FrequencyOfPlays] = Macros.handler[FrequencyOfPlays]
   implicit val StatResponseHandler: BSONHandler[BSONDocument, StatResponse] = Macros.handler[StatResponse]
  
-
+  object IntervalKind extends Enumeration {
+    type IntervalKind = Value
+    val daily = Value("DAY")
+    val weekly = Value("WEEK")
+    val monthly = Value("MONTH")
+    val yearly = Value("YEAR")
+    val allTime = Value("ALLTIME")
+  } 
 
 
 /*
@@ -183,5 +191,4 @@ object StatisticEntities {
         case a: Stats => StatsWriter.write(a)
       }
   }
-
-  }
+}
