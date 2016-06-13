@@ -31,18 +31,17 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
 
   def waitingRequest: Receive = {
     case ComputeStatsInInterval(userID, from, to) =>
-    // TODO send a message for each subtype of stats.
-    // Collect each response, and once we get all the parts, send to the manager
-
-    SubStatisticKind.values.foreach{
-      v =>
-        val worker = context.actorOf(ComputationWorker.props(database, kind, ago))
-        worker ! ComputeSubStat(userID, v, from, to)
-    }
-    context.become(waitingSubStats(sender, userID, StatsOnInterval(ago, 0, 0, 0, List(), List()), SubStatisticKind.values.size))
-    
+      SubStatisticKind.values.foreach{
+        v =>
+          val worker = context.actorOf(ComputationWorker.props(database, kind, ago))
+          worker ! ComputeSubStat(userID, v, from, to)
+      }
+      context.become(
+        waitingSubStats(sender, userID, 
+          StatsOnInterval(ago, 0, 0, 0, List(), List()), SubStatisticKind.values.size))
+      
     case ComputeSubStat(userID, kind, from, to) =>
-      val client = context.sender
+      val client = sender
       kind match {
         case SubStatisticKind.amount => computeAmount(client, userID, from, to)
         case SubStatisticKind.correct => computeCorrect(client, userID, from, to)
@@ -55,27 +54,26 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
   }
 
   def waitingSubStats(client: ActorRef, userID: String, stats: StatsOnInterval, remaining: Int): Receive = {
-    case AmountStat(nb) =>
-      val StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, gamePlayedAgainst) = stats
-      val newStats = StatsOnInterval(ago, nb, correct, percentCorrect, questionBreakDown, gamePlayedAgainst)
-      isComplete(userID, client, newStats, remaining)
-    case CorrectStat(nb) =>
-      val StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, gamePlayedAgainst) = stats
-      val newStats = StatsOnInterval(ago, amount, nb, percentCorrect, questionBreakDown, gamePlayedAgainst)
-      isComplete(userID, client, newStats, remaining)
-    case PercentCorrectStat(percent) =>
-      val StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, gamePlayedAgainst) = stats
-      val newStats = StatsOnInterval(ago, amount, correct, percent, questionBreakDown, gamePlayedAgainst)
-      isComplete(userID, client, newStats, remaining)
-    case QuestionBreakDownStat(questions) =>
-      val StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, gamePlayedAgainst) = stats
-      val newStats = StatsOnInterval(ago, amount, correct, percentCorrect, questions, gamePlayedAgainst)
-      isComplete(userID, client, newStats, remaining)
-    case GamesPlayedAgainstStat(games) =>
-      val StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, gamePlayedAgainst) = stats
-      val newStats = StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, games)
-      isComplete(userID, client, newStats, remaining)
-    case o => log.info(s"Unexpected message $o received in ComputationWorker")
+    val StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, gamePlayedAgainst) = stats
+
+    {
+      case AmountStat(nb) =>
+        val newStats = StatsOnInterval(ago, nb, correct, percentCorrect, questionBreakDown, gamePlayedAgainst)
+        isComplete(userID, client, newStats, remaining)
+      case CorrectStat(nb) =>
+        val newStats = StatsOnInterval(ago, amount, nb, percentCorrect, questionBreakDown, gamePlayedAgainst)
+        isComplete(userID, client, newStats, remaining)
+      case PercentCorrectStat(percent) =>
+        val newStats = StatsOnInterval(ago, amount, correct, percent, questionBreakDown, gamePlayedAgainst)
+        isComplete(userID, client, newStats, remaining)
+      case QuestionBreakDownStat(questions) =>
+        val newStats = StatsOnInterval(ago, amount, correct, percentCorrect, questions, gamePlayedAgainst)
+        isComplete(userID, client, newStats, remaining)
+      case GamesPlayedAgainstStat(games) =>
+        val newStats = StatsOnInterval(ago, amount, correct, percentCorrect, questionBreakDown, games)
+        isComplete(userID, client, newStats, remaining)
+      case o => log.info(s"Unexpected message $o received in ComputationWorker")
+    }
   }
 
   def isComplete(userID: String, client: ActorRef, stat: StatsOnInterval, remaining: Int): Unit = {
@@ -89,37 +87,12 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
 
 // TODO : Aggregations !
   def computeAmount(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! AmountStat(0)
-  }
-  def computeCorrect(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! CorrectStat(0)
-  }
-  def computePercentCorrect(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! PercentCorrectStat(0)
-  }
-  def computeQuestionBreakDown(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! QuestionBreakDownStat(List())
-  }
-  def computeGamesPlayedAgainst(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! GamesPlayedAgainstStat(List())
-  }
-
-  /*def computeAverageScore(userID: String) : Unit = {
-    //TODO
-    context.parent ! AverageScore(0)
-  }
-
-  def computeCountCorrectQuestion(userID: String) : Unit = {
-    //TODO
-    context.parent ! CountCorrectQuestion(0, 0)
-  }
-  
-  def computeCountWinnerGame(userID: String) : Unit = {
     
     import me.reminisce.model.DatabaseCollection
     // The name's field depends on the userID
     val idScores = "$" + userID + "_Scores"
- 
+    
+    // TODO add the interval condition
     val unifiedQuery = BSONDocument(
       "aggregate" -> DatabaseCollection.gameTestCollection,
       "pipeline" -> BSONArray(
@@ -129,8 +102,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
         BSONDocument(
           "$group" -> BSONDocument(
             "_id" -> userID,
-            "count" -> BSONDocument("$sum" -> 1),
-            "averageScore" -> BSONDocument("$avg" -> idScores)
+            "count" -> BSONDocument("$sum" -> 1)
           )
         )
       )
@@ -145,19 +117,38 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
           case Some(array: BSONArray) =>
             array.get(0) match {
               case Some(doc: BSONDocument) =>
-                val average = doc.getAs[Double]("averageScore")
-                average match {
-                  case Some(a) =>  context.parent ! AverageScore(a)
-                  case _ =>  context.parent ! Abort
-                }
-               
-              case e => log.info(s"No results for the user $userID")
+                val count = doc.getAs[Int]("count")
+                count match {
+                  case Some(a) =>  client ! AmountStat(a)
+                  case _ =>  client ! AmountStat(0)
+                }               
+              case e => 
+                client ! AmountStat(0)
+                log.info(s"No results for the user $userID")
             }
           case e =>
+            client ! AmountStat(0)
             log.info(s"Error: $e is not a BSONArray")
-      }    
+        }
       case error =>
+        client ! AmountStat(0)
         log.info(s"The command has failed with error: $error")
-    }    
-  }*/
+    }
+  }
+
+  def computeCorrect(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
+    client ! CorrectStat(0)
+  }
+
+  def computePercentCorrect(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
+    client ! PercentCorrectStat(0)
+  }
+
+  def computeQuestionBreakDown(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
+    client ! QuestionBreakDownStat(List())
+  }
+
+  def computeGamesPlayedAgainst(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
+    client ! GamesPlayedAgainstStat(List())
+  }
 }
