@@ -1,28 +1,15 @@
 package me.reminisce.computing
 
 import akka.actor._
-import me.reminisce.server.GameEntities._
-import me.reminisce.server.domain.RestMessage
 import me.reminisce.statistics.StatisticEntities._
 import me.reminisce.statistics.StatisticEntities.IntervalKind.IntervalKind
 import me.reminisce.inserting.InsertionService
 import me.reminisce.retrieving.RetrievingService
-import me.reminisce.model.InsertionMessages._
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.RetrievingMessages._
 import me.reminisce.model.Messages._
 
-import reactivemongo.api.collections.bson._
-import reactivemongo.api.commands.bson
-import reactivemongo.bson.{BSONDocument, BSONArray, BSONString}
 import reactivemongo.api.DefaultDB
-import reactivemongo.api.commands.Command
-import reactivemongo.api.BSONSerializationPack
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-import com.github.nscala_time.time.Imports._
 import org.joda.time.{DateTime, Days, Weeks, Months, Years}
 
 

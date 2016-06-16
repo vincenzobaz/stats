@@ -3,7 +3,6 @@ package me.reminisce.model
 import me.reminisce.server.domain.RestMessage
 import me.reminisce.statistics.StatisticEntities._
 import me.reminisce.model.ComputationMessages.SubStatisticKind.SubStatisticKind
-import me.reminisce.statistics.StatisticEntities.IntervalKind.IntervalKind
 import com.github.nscala_time.time.Imports._
 
 object ComputationMessages {

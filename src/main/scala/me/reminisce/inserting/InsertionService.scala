@@ -1,13 +1,10 @@
 package me.reminisce.inserting
 
 import akka.actor._
-import me.reminisce.server.GameEntities._
-import me.reminisce.server.domain.RestMessage
 import reactivemongo.api.DefaultDB
 import me.reminisce.computing.ComputationService
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.Messages._
-import com.github.nscala_time.time.Imports._
 
 object InsertionService {
   def props(database: DefaultDB):Props =

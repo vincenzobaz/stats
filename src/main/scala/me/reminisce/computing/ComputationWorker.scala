@@ -1,13 +1,10 @@
 package me.reminisce.computing
 
-
 import akka.actor._
 import me.reminisce.statistics.StatisticEntities._
-import me.reminisce.database._
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.statistics.StatisticEntities.IntervalKind.IntervalKind
 
-import reactivemongo.api.collections.bson._
 import reactivemongo.bson.{BSONDocument, BSONArray}
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.commands.Command
@@ -15,7 +12,7 @@ import reactivemongo.api.BSONSerializationPack
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 import com.github.nscala_time.time.Imports._
 

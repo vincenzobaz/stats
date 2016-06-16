@@ -3,10 +3,6 @@ package me.reminisce.computing
 
 import akka.actor._
 import me.reminisce.model.ComputationMessages._
-import me.reminisce.server.domain.RestMessage
-import me.reminisce.statistics.StatisticEntities._
-import me.reminisce.inserting.InsertionService._ 
-import me.reminisce.model.InsertionMessages._
 import reactivemongo.api.DefaultDB
 
 import me.reminisce.statistics.StatisticEntities._

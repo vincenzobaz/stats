@@ -3,16 +3,12 @@ package me.reminisce.inserting
 import akka.actor._
 import me.reminisce.server.GameEntities._
 import me.reminisce.statistics.StatisticEntities._
-import me.reminisce.server.domain.RestMessage
 import me.reminisce.model.DatabaseCollection
 import me.reminisce.model.Messages._
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson._
-import reactivemongo.bson.{BSONDocument, BSONArray}
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
-
 
 object InsertionWorker {
   def props(database: DefaultDB):Props =

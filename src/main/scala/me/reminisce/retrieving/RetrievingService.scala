@@ -1,7 +1,6 @@
 package me.reminisce.retrieving
 
 import akka.actor._
-import me.reminisce.server.domain.RestMessage
 import me.reminisce.computing.ComputationService
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.DatabaseCollection

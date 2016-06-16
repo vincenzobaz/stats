@@ -1,21 +1,16 @@
 package me.reminisce.retrieving
 
 import akka.actor._
-import me.reminisce.server.domain.RestMessage
-import me.reminisce.computing.ComputationService
-import me.reminisce.model.ComputationMessages._
 import me.reminisce.statistics.StatisticEntities._
 
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.collections.bson._
-import reactivemongo.api.commands.bson
 import reactivemongo.bson.{BSONDocument, BSONArray, BSONString}
 import reactivemongo.api.commands.Command
 import reactivemongo.api.BSONSerializationPack
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.Success
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.nscala_time.time.Imports._
 
 object RetrievingWorker {
   def props(database: DefaultDB):Props =

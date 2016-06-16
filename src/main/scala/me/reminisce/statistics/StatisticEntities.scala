@@ -1,19 +1,11 @@
 package me.reminisce.statistics
 
 import reactivemongo.bson._
-import me.reminisce.server.GameEntities._
-import com.github.nscala_time.time.Imports._
-import me.reminisce.model.InsertionMessages._
-import me.reminisce.server.domain.RestMessage
 import me.reminisce.statistics.StatisticEntities.QuestionsBreakDownKind.QuestionsBreakDownKind
 import com.github.nscala_time.time.Imports._
 
 object StatisticEntities {
-/*
-    ##### NEW API ########
-*/
 
-  
   case class StatResponse(
     userID: String, 
     frequencies: FrequencyOfPlays,
@@ -93,6 +85,7 @@ object StatisticEntities {
       )
     }
   }
+
   implicit val gamesPlayedAgainstHandler: BSONHandler[BSONDocument, GamesPlayedAgainst] = Macros.handler[GamesPlayedAgainst]  
   implicit val statsOnIntervalHandler: BSONHandler[BSONDocument, StatsOnInterval] = Macros.handler[StatsOnInterval]
   implicit val frequencyOfPlaysHandler: BSONHandler[BSONDocument, FrequencyOfPlays] = Macros.handler[FrequencyOfPlays]

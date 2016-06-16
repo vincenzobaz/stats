@@ -11,10 +11,8 @@ import me.reminisce.server.GameEntities._
 import me.reminisce.server.jsonserializer.StatsFormatter
 import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
 import me.reminisce.model.InsertionMessages._
-import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.RetrievingMessages._
 import me.reminisce.inserting.InsertionService
-import me.reminisce.computing.ComputationService
 import me.reminisce.retrieving.RetrievingService
 
 object StatsService
