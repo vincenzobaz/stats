@@ -32,12 +32,15 @@ class InsertionWorker(database: DefaultDB) extends Actor with ActorLogging {
       log.info(s"Unexpected message ($o) received in InsertionWorker")
   }
 
+  /*
+   * Insert a Game in the database and send the id's of players to the client
+   */
   def insertInDb(entity: Game) = {  
     val col = database[BSONCollection](DatabaseCollection.gameCollection)
     val future = col.insert(entity)
 
     future.onComplete {
-      case Failure(e) => throw e
+      case Failure(e) => context.parent ! Abort
       case Success(lastError) => {
         val toRecompute = List(entity.player1, entity.player2)
         context.parent ! Inserted(toRecompute)
@@ -45,9 +48,12 @@ class InsertionWorker(database: DefaultDB) extends Actor with ActorLogging {
     }
   }
 
+  /*
+   * Insert a Statistics entity in the database and send tha status insertion to the client
+   */
   def insertStatInDB(stats: StatResponse) {
     
-    // TODO WHY the one in StatisticEntites is not imported ???
+     // TODO WHY the one in StatisticEntites is not imported ???
     import reactivemongo.bson._
     implicit val StatWriter: BSONDocumentWriter[StatResponse] = Macros.writer[StatResponse]
     
@@ -55,7 +61,8 @@ class InsertionWorker(database: DefaultDB) extends Actor with ActorLogging {
     val future = col.insert(stats)
 
     future.onComplete {
-      case Failure(e) => throw e
+      case Failure(e) => 
+        context.parent ! Abort
       case Success(lastError) => {
         context.parent ! Done
       }

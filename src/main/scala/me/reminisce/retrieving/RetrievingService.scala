@@ -8,6 +8,7 @@ import me.reminisce.model.DatabaseCollection
 import me.reminisce.model.Messages._
 import me.reminisce.statistics.StatisticEntities._
 import reactivemongo.api.DefaultDB
+import com.github.nscala_time.time.Imports._
 
 object RetrievingService {
   def props(database: DefaultDB):Props =
@@ -22,60 +23,75 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
    * Initial State. Wait for a request
    */
   def waitingForMessages: Receive = {
-    case msg @ RetrieveStats(userID, frequencies, allTime) if DatabaseCollection.UseCache=>
-      // TODO
-      // 1. get the lastest stats entity
-      // 2. Compare with today date
-      // 3. if same day -> return it else compute
-
-      sender ! StatisticsRetrieved(StatResponse(userID, FrequencyOfPlays()))
-
+    case msg @ RetrieveStats(userID, frequencies, allTime) if DatabaseCollection.UseCache =>
+      val timeline = frequenciesToTimeline(userID, frequencies)
+      val worker = context.actorOf(RetrievingWorker.props(database))
+      worker ! RetrieveLastStatistics(userID)
+      context.become(waitingForWorker(userID, sender, timeline, allTime))
 
     case msg @ RetrieveStats(userID, frequencies, allTime)  =>
       val timeline = frequenciesToTimeline(userID, frequencies)
-      val computationService = context.actorOf(ComputationService.props(database))
-      computationService ! ComputeStatsWithTimeline(userID, timeline, allTime)
-      context.become(waitingForComputation(sender))
+      computeStatistics(userID, sender, timeline, allTime)
   
     case msg @ GetFirstPlayDate(userID) =>
       val worker = context.actorOf(RetrievingWorker.props(database))
       worker ! msg
-      context.become(waitingForWorker(sender))
+      context.become(waitingForWorker(userID, sender))
 
     case o => log.info(s"Unexpected message ($o) received in RetrievingService")
   }
+
   /*
    * Wait for a response from a ComputationService.
    */
-  def waitingForComputation(client: ActorRef): Receive = {
+  def waitingForComputation(userID: String, client: ActorRef): Receive = {
     case Done =>
-      log.info(s"Stats have been inserted")
+      sender ! PoisonPill
+      context.self ! PoisonPill
+    case Abort =>
+      client ! StatisticsNotFound(s"Statistics not found for $userID")
       sender ! PoisonPill
       context.self ! PoisonPill
     case msg @ StatResponse(_, _, _) =>
       client ! StatisticsRetrieved(msg)
       // Doesn't stop the computation service yet, wait for insertion notification
-    case Abort =>
-      log.info(s"Abort: Stats haven't been inserted")
-      sender ! PoisonPill
-      context.self ! PoisonPill
     case o  => log.info(s"Unexpected message ($o) received in waitingForComputation state :(")
   }
+
   /*
    * Wait for a response from a RetrievingWorker
    */
-  def waitingForWorker(client: ActorRef): Receive = {
+  def waitingForWorker(userID: String, client: ActorRef, timeline: Timeline = null, allTime: Boolean = false): Receive = {
     case msg @ FirstPlayDate(date) =>
       client ! msg
       sender ! PoisonPill
       context.become(waitingForMessages)
-    case o  => log.info(s"Unexpected message ($o) received in waitingForAge state")
-
+    case StatisticsRetrieved(stats) =>
+      sender ! PoisonPill
+      if((stats.computationTime + 1.days) >= DateTime.now)
+        client ! StatisticsRetrieved(stats)
+      else
+        computeStatistics(userID, client, timeline, allTime)
+      
+    case StatisticsNotFound(msg) =>
+        computeStatistics(userID, client, timeline, allTime)
+    case o  => log.info(s"[RS] Unexpected message ($o) received in waitingForWorker state")
   }
+
+  /*
+   * Instantiate a Computation Service and start the computation
+   */
+  private def computeStatistics(userID: String, client: ActorRef, timeline: Timeline, allTime: Boolean) = {
+    val computationService = context.actorOf(ComputationService.props(database))
+    computationService ! ComputeStatsWithTimeline(userID, timeline, allTime)
+    context.become(waitingForComputation(userID, client))
+  }
+
   /*
    * Return a Timeline class with the fields contained in frequencies or default values if missing.
    */
-  private def frequenciesToTimeline(userID: String, frequencies: List[(String, Int)]): Timeline = {
+  private def frequenciesToTimeline(userID: String, frequencies: List[(String, Int)]): Timeline = 
+  {
     val freqMap: Map[String, Int] = frequencies.toMap
     val day: Int = freqMap.getOrElse("day", 30)
     val week: Int = freqMap.getOrElse("week", 5)
@@ -83,5 +99,4 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
     val year: Int = freqMap.getOrElse("year", 10)
     Timeline(userID, day, week, month, year)
   }
-
 }

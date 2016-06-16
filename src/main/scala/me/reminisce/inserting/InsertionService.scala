@@ -34,14 +34,11 @@ class InsertionService(database: DefaultDB) extends Actor with ActorLogging {
         val worker = context.actorOf(ComputationService.props(database))
         worker ! ComputeStatistics(id)}
       sender ! PoisonPill 
-      log.info("PoisonPill sent to InsertionWorker")
     case Done => 
       client ! InsertionDone("Insertion completed")
       sender ! PoisonPill
-      log.info("PoisonPill sent to InsertionWorker")
     case Abort => 
       client ! InsertionAbort("Insertion aborted")
       sender ! PoisonPill
-      log.info("PoisonPill sent to InsertionWorker")
   }
 }

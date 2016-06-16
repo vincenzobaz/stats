@@ -97,7 +97,16 @@ object StatisticEntities {
   implicit val statsOnIntervalHandler: BSONHandler[BSONDocument, StatsOnInterval] = Macros.handler[StatsOnInterval]
   implicit val frequencyOfPlaysHandler: BSONHandler[BSONDocument, FrequencyOfPlays] = Macros.handler[FrequencyOfPlays]
   implicit val StatResponseHandler: BSONHandler[BSONDocument, StatResponse] = Macros.handler[StatResponse]
- 
+  
+  implicit object StatsHandlerReader extends BSONDocumentReader[StatResponse]{
+    def read(doc: BSONDocument) : StatResponse = {
+      val id = doc.getAs[String]("userID").get
+      val freq = doc.getAs[FrequencyOfPlays]("frequencies").get
+      val time = doc.getAs[DateTime]("computationTime").get
+      StatResponse(id, freq, time)
+    }
+  }
+
   object IntervalKind extends Enumeration {
     type IntervalKind = Value
     val daily = Value("DAY")

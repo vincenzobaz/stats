@@ -34,7 +34,6 @@ object ComputationMessages {
     val amount = Value("Amount")
     val won = Value("Won")
     val lost = Value("lost")
-    val percentCorrect = Value("PercentCorrect")
     val questionBreakDown = Value("QuestionBreakDown")
     val gamePlayedAgainst = Value("GamePlayedAgainst")
   } 

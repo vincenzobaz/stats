@@ -74,7 +74,9 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         log.info(s"Unexpected message $o received in waitingComputation state")
     }
   }
-
+  /*
+   * Wait for the data retrieving
+   */
   def waitingForRetrieving(client: ActorRef, userID: String): Receive = {
     case FirstPlayDate(date) =>
       sender ! PoisonPill
@@ -84,7 +86,9 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       log.info(s"Unexpected message $o received in waitingForretrieving state")
 
   }
-
+  /*
+   * Collect all the statistics from the manager and send the StatResponse to the client
+   */
   def isComplete(userID: String, client: ActorRef, acc: FrequencyOfPlays, remaining: Int): Unit = {
     val newRemaining = remaining -1
     if (newRemaining == 0){
@@ -96,34 +100,41 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
     }
   }
 
-
+  /*
+   * Wait for the new computed Statistics entity insertion 
+   */
   def waitingInsertion(client: ActorRef, service: ActorRef, tryAgain: Int, stat: StatResponse): Receive = {
     case InsertionDone(message) => 
       service ! PoisonPill
       client ! Done
-    case abort @ InsertionAbort(message) => 
+    case InsertionAbort(message) => 
       if(tryAgain != 0) {
         service ! InsertStatistic(stat)
         context.become(waitingInsertion(client, service, tryAgain - 1, stat))
       } else {
-        client ! abort
+        client ! Abort
         service ! PoisonPill
       }
   }
-  
+
+  /*
+   * Instantiate a Insertion Service and start the insertion of the statistics entity
+   */
   def insertStat(client: ActorRef, stat: StatResponse){
     val service = context.actorOf(InsertionService.props(database))
     service ! InsertStatistic(stat)
-    context.become(waitingInsertion(client, service, 5, stat))
+    context.become(waitingInsertion(client, service, 5, stat))    
   }
 
+  /*
+   * Dispatch the computation request to managers
+   */
   private def splitRequestIntoManager(userID: String, timeline: Timeline, allTime:Boolean, client: ActorRef) = {
     val daysManager = (IntervalKind.daily, context.actorOf(ComputationManager.props(database, IntervalKind.daily)))
     val weeksManager = (IntervalKind.weekly, context.actorOf(ComputationManager.props(database, IntervalKind.weekly)))
     val monthsManager = (IntervalKind.monthly, context.actorOf(ComputationManager.props(database, IntervalKind.monthly)))
     val yearsManager = (IntervalKind.yearly, context.actorOf(ComputationManager.props(database, IntervalKind.yearly)))
-    
-    
+        
     val managersMaps: Map[IntervalKind, ActorRef] = 
       if(allTime) {
         val allTimeManager = (IntervalKind.allTime, context.actorOf(ComputationManager.props(database, IntervalKind.allTime)))
@@ -136,9 +147,11 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       case (manager, ref) => ref ! ComputeStatsWithTimeline(userID, timeline, allTime)
     }
     context.become(waitingComputation(client, userID, FrequencyOfPlays(), managersMaps.size))   
-
   }
 
+  /*
+   * Compute the number of day, week, month and year since the first play of the user
+   */
   private def howManyToCompute(userID: String, firstPlay: DateTime): Timeline = {
     val today = DateTime.now
     val days = Days.daysBetween(firstPlay, today).getDays
@@ -146,7 +159,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
     val months = Months.monthsBetween(firstPlay, today).getMonths
     val years = Years.yearsBetween(firstPlay, today).getYears
     val timeline = Timeline(userID, days, weeks, months, years)
-    //println(timeline)
     timeline
   }
 }

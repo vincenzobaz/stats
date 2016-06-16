@@ -30,9 +30,8 @@ class RetrievingWorker(database: DefaultDB) extends Actor with ActorLogging {
    * Wait for request
    */
   def waitingForRequest: Receive = {
-    case GetStatistics(userID) => 
-      val client = sender
-      //retrieveStats(userID, client)
+    case RetrieveLastStatistics(userID) => 
+      retrieveStats(userID, sender)
     case GetFirstPlayDate(userID) =>
       getFirstPlayDate(userID, sender)
     case o => log.info(s"Unexpected message ($o) received in RetrievingWorker")
@@ -78,8 +77,8 @@ class RetrievingWorker(database: DefaultDB) extends Actor with ActorLogging {
           array.get(0) match {
             case Some(doc: BSONDocument) =>
               val birthday = doc.getAs[Long]("birthday")
-              println(doc.getAs[Int]("count"))
-              println(birthday)
+              // println(doc.getAs[Int]("count"))
+              // println(birthday)
               //val lifetime = howManyToCompute(userID, birthday.getOrElse(DateTime.now.getMillis))              
             case e => 
               log.info(s"No result fot the user $userID: $e")
@@ -92,33 +91,33 @@ class RetrievingWorker(database: DefaultDB) extends Actor with ActorLogging {
     }
   }
 
-  /*def retrieveStats(userID: String, client: ActorRef): Unit = {
+  /*
+  * Query the last Statistics Entity for the userID and send it back to the client
+  */
+  def retrieveStats(userID: String, client: ActorRef): Unit = {
     import me.reminisce.model.DatabaseCollection
-    println(s"self: $self, client: $client")
+
     val query = BSONDocument(
       "userID" -> userID
       )
-    // TODO sort by Date and take the lastest
 
-    val s: Future[List[Stats]] = database[BSONCollection](DatabaseCollection.cacheCollection).
+    val s: Future[List[StatResponse]] = database[BSONCollection](DatabaseCollection.cacheCollection).
       find(query).
-      cursor[Stats]().
+      sort(BSONDocument("computationTime" -> -1)). 
+      cursor[StatResponse]().
       collect[List](1)
 
       s.onComplete{
         case Success(stats)  =>
           if(!stats.isEmpty) {
-            log.info("stats !")
             client ! StatisticsRetrieved(stats.head)
           } else {
-            log.info("no stats !")
-            val emptyStat = Stats(userID, None, None, None)
-            client ! StatisticsRetrieved(emptyStat)
+            client ! StatisticsNotFound(s"No statistics found for $userID")
           }
         case f =>
           log.info(s"Failure while getting stats. Error: $f ")
-          client ! Abort
+          client ! StatisticsNotFound(s"No statistics found for $userID")
       }
-  }*/
+  }
 
 }
