@@ -65,12 +65,11 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
           parameterSeq {
             params =>        
               parseParameters(params) match {
-                case Some(rs)=>  
-                  println(rs)
+                case Some(rs)=>
                   retrieveStats(rs)
                 case None =>
                   complete{
-                    "Unknown or malformed parameters"
+                    "Unknown or malformed request"
                   }
               }           
           }

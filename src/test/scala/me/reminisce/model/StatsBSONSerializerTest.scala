@@ -70,12 +70,12 @@ class StatsBSONSerializersTest extends FunSuite {
   val amount = 4
   val questionsBreackDown = List(qbd, qbd)
   val gamePlayedAgainst = List(game, game, game)
-  val statsOnInterval = StatsOnInterval(ago, amount, correct, percentCorrect, questionsBreackDown, gamePlayedAgainst)
+  val statsOnInterval = StatsOnInterval(ago, amount, won, lost, questionsBreackDown, gamePlayedAgainst)
   val docStatsOnInterval = BSONDocument(
     "ago" -> ago,
     "amount" -> amount,
-    "correct" -> correct,
-    "percentCorrect" -> percentCorrect,
+    "won" -> won,
+    "lost" -> lost,
     "questionsBreakDown" -> questionsBreackDown,
     "gamesPlayedAgainst" -> gamePlayedAgainst
     )
@@ -85,8 +85,8 @@ class StatsBSONSerializersTest extends FunSuite {
     
     assert(bson.getAs[Int]("ago") == docStatsOnInterval.getAs[Int]("ago"))
     assert(bson.getAs[Int]("amount") == docStatsOnInterval.getAs[Int]("amount"))
-    assert(bson.getAs[Int]("correct") == docStatsOnInterval.getAs[Int]("correct"))
-    assert(bson.getAs[Double]("percentCorrect") == docStatsOnInterval.getAs[Double]("percentCorrect"))
+    assert(bson.getAs[Int]("won") == docStatsOnInterval.getAs[Int]("won"))
+    assert(bson.getAs[Int]("lost") == docStatsOnInterval.getAs[Int]("lost"))
     
     val questionWritten = bson.getAs[List[QuestionsBreakDown]]("questionsBreakDown")
     val questionGiven = docStatsOnInterval.getAs[List[QuestionsBreakDown]]("questionsBreakDown")

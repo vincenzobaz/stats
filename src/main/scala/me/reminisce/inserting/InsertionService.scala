@@ -6,6 +6,8 @@ import me.reminisce.server.domain.RestMessage
 import reactivemongo.api.DefaultDB
 import me.reminisce.computing.ComputationService
 import me.reminisce.model.ComputationMessages._
+import me.reminisce.model.Messages._
+import com.github.nscala_time.time.Imports._
 
 object InsertionService {
   def props(database: DefaultDB):Props =
@@ -18,17 +20,21 @@ class InsertionService(database: DefaultDB) extends Actor with ActorLogging {
   def receive: Receive = waitingForMessages(null)
 
   def waitingForMessages(client: ActorRef): Receive = {
-    case InsertEntity(game) => 
+    case msg @ InsertEntity(game) => 
       val worker = context.actorOf(InsertionWorker.props(database))
-      worker ! InsertEntity(game)
+      worker ! msg
+      context.become(waitingForMessages(sender))
+    case msg @ InsertStatistic(stats) =>
+      val worker = context.actorOf(InsertionWorker.props(database))
+      worker ! msg
       context.become(waitingForMessages(sender))
     case Inserted(ids) => 
       ids.foreach{ id =>
-        sender ! InsertionDone("Insertion completed")
+        client ! InsertionDone("Insertion completed")
         val worker = context.actorOf(ComputationService.props(database))
         worker ! ComputeStatistics(id)}
-        sender ! PoisonPill 
-        log.info("PoisonPill sent to InsertionWorker")
+      sender ! PoisonPill 
+      log.info("PoisonPill sent to InsertionWorker")
     case Done => 
       client ! InsertionDone("Insertion completed")
       sender ! PoisonPill

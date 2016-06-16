@@ -1,16 +1,15 @@
 package me.reminisce.model
 
 import me.reminisce.server.domain.RestMessage
+import me.reminisce.server.GameEntities._
+import me.reminisce.statistics.StatisticEntities._
 
 object InsertionMessages {
 
-  trait Entity
-
-  case class InsertEntity(entity: Entity) extends RestMessage
+  case class InsertEntity(game: Game) extends RestMessage
+  case class InsertStatistic(stats: StatResponse)
   case class Inserted(ids: List[String])
-  case object Done
-  case object Abort
-  //TODO trait for insertionDone and InsertionAbort -> Facilitate the deserialization of the insertion result
+
   case class InsertionDone(message: String) extends RestMessage
   case class InsertionAbort(message: String) extends RestMessage
 }

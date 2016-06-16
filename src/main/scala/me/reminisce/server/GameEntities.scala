@@ -24,7 +24,7 @@ object GameEntities {
     player2AvailableMoves: List[Move],
     wonBy: Int,
     creationTime: Int
-    ) extends Entity {
+    ) {
     override def toString(): String = s"GAME: players: $player1($player1Scores) vs $player2($player2Scores) : winner: $wonBy"
   }
 
