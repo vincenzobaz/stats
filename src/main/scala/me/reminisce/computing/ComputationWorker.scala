@@ -94,7 +94,6 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
     val userScore = s"${userID}_Scores"
     val query = BSONDocument(
                 "status" -> "ended",
-
                 userScore -> BSONDocument(
                   "$exists" -> true
                   ),
@@ -125,7 +124,6 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
     val userScore = s"${userID}_Scores"
     val query = BSONDocument(
                 "status" -> "ended",
-
                 userScore -> BSONDocument(
                   "$exists" -> true
                   ),
@@ -157,7 +155,6 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
     val userScore = s"${userID}_Scores"
     val query = BSONDocument(
                 "status" -> "ended",
-
                 userScore -> BSONDocument(
                   "$exists" -> true
                   ),
@@ -184,11 +181,29 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
   }
 
   def computeQuestionBreakDown(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
+    val getQuestionsBreakDownForKind: ((QuestionsBreakDownKind, List[Game]) => 
+        QuestionsBreakDown) = (k: QuestionsBreakDownKind, games: List[Game]) => {
+      val (total, correct) = games.foldLeft((0, 0)){
+        case ((t, c), Game(_, p1, p2, p1b, p2b, _, _, _, _, _, _, _, _, _)) =>
+          val tiles = if (p1 == userID) p1b.tiles else p2b.tiles
+          val stats = tiles.foldLeft((0,0)) {
+            case(acc2, Tile(questionKind, _, _, _, _, score, ans, dis)) =>
+              if(k == QuestionsBreakDownKind.withName(questionKind) && ans && !dis)
+                (acc2._1 + 3, acc2._1 + score)
+              else
+                acc2            
+          }
+          (t + stats._1, c + stats._2)
+      }
+      val percent: Double = if(total != 0) correct / total else 0.0
+      QuestionsBreakDown(k, total, correct, percent)
+    }
+
+
     import me.reminisce.model.DatabaseCollection
     val userScore = s"${userID}_Scores"
     val query = BSONDocument(
                 "status" -> "ended",
-
                 userScore -> BSONDocument(
                   "$exists" -> true
                   ),
@@ -204,7 +219,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
       s.onComplete{
         case Success(games)  =>
           if(!games.isEmpty){
-            val l = QuestionsBreakDownKind.values.map(v => getQuestionsBreakDownForKind(v, games, userID)).toList
+            val l = QuestionsBreakDownKind.values.map(v => getQuestionsBreakDownForKind(v, games)).toList
               client ! QuestionBreakDownStat(l) 
             } else {
               client ! QuestionBreakDownStat(List())
@@ -212,28 +227,57 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
         case f => 
           log.info(s"Failure while getting stats. Error: $f ")
           client ! QuestionBreakDownStat(List())
-
-  }
+    }
   }
 
   def computeGamesPlayedAgainst(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! GamesPlayedAgainstStat(List())
-
-  }
-  private def getQuestionsBreakDownForKind(k: QuestionsBreakDownKind, games: List[Game], userID: String) : QuestionsBreakDown = {
-    val (total, correct) = games.foldLeft((0, 0)){
-      case ((t, c), Game(_, p1, p2, p1b, p2b, _, _, _, _, _, _, _, _, _)) =>
-        val tiles = if (p1 == userID) p1b.tiles else p2b.tiles
-        val stats = tiles.foldLeft((0,0)) {
-          case(acc2, Tile(questionKind, _, _, _, _, score, ans, dis)) =>
-            if(k == QuestionsBreakDownKind.withName(questionKind) && ans && !dis)
-              (acc2._1 + 3, acc2._1 + score)
-            else
-              acc2            
-        }
-        (t + stats._1, c + stats._2)
+    val battleSummary: ((String, List[Game]) => GamesPlayedAgainst) = (opponentID: String, plays: List[Game]) => {
+      val (nb, won) = plays.foldLeft((0, 0)){
+        case ((n, w), game) =>
+          val userAs = if(game.player1 == userID) 1 else 2
+            if(game.wonBy == userAs)
+              (n + 1, w + 1)
+            else 
+              (n + 1, w)
+          }
+      GamesPlayedAgainst(opponentID, nb, won, nb - won)
     }
-    val percent: Double = if(total != 0) correct / total else 0.0
-    QuestionsBreakDown(k, total, correct, percent)
+     
+    import me.reminisce.model.DatabaseCollection
+
+    val userScore = s"${userID}_Scores"
+    val query = BSONDocument(
+                "status" -> "ended",
+                userScore -> BSONDocument(
+                  "$exists" -> true
+                  ),
+                  "creationTime" -> BSONDocument(
+                  //"$gte" -> from.getMillis,
+                  "$lt" -> to.getMillis
+                  )
+              )
+    val s: Future[List[Game]] = database[BSONCollection](
+        DatabaseCollection.gameCollection).find(query).cursor[Game](
+        ).collect[List]()
+
+      s.onComplete{
+        case Success(games)  =>
+          if(!games.isEmpty){
+            //Group games by opponentID
+            val gameVsSomeone = games.groupBy{ g =>
+              if(userID == g.player1) 
+                g.player2
+              else
+                g.player1
+              }
+              val l: List[GamesPlayedAgainst] = gameVsSomeone.map{ case (id, v) => battleSummary(id, v)}.toList
+              client ! GamesPlayedAgainstStat(l) 
+            } else {
+              client ! GamesPlayedAgainstStat(List())
+            }
+        case f => 
+          log.info(s"Failure while getting stats. Error: $f ")
+          client ! GamesPlayedAgainstStat(List())
+    }  
   }
 }
