@@ -68,7 +68,7 @@ class ComputationManager(database: DefaultDB, kind: IntervalKind) extends Actor 
       case IntervalKind.weekly => 1.weeks
       case IntervalKind.monthly => 1.months
       case IntervalKind.yearly => 1.year
-      case IntervalKind.allTime => 10.year // TODO get the "age" of the user
+      case IntervalKind.allTime => 10.year
     }
     val from = today - (ago * duration) - duration
     val to = today - (ago * duration)

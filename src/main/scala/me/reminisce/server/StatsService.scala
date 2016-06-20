@@ -32,7 +32,6 @@ object GameFormat extends Json4sSupport with StatsFormatter{}
   * Defines a GameCreatorService with the handled routes.
   */
 trait StatsService extends HttpService with RESTHandlerCreator with Actor with ActorLogging {
-trait StatsService extends HttpService with RESTHandlerCreator with Actor with ActorLogging {
   def actorRefFactory: ActorContext
 
   val db: DefaultDB

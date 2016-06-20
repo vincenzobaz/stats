@@ -23,7 +23,7 @@ object GameEntities {
     player1AvailableMoves: List[Move],
     player2AvailableMoves: List[Move],
     wonBy: Int,
-    creationTime: Int
+    creationTime: Long
     ) {
     override def toString(): String = s"GAME: players: $player1($player1Scores) vs $player2($player2Scores) : winner: $wonBy"
   }
@@ -411,7 +411,7 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
       val player1AvailableMoves = doc.getAs[List[Move]](s"${player1}_AvailableMoves").get
       val player2AvailableMoves = doc.getAs[List[Move]](s"${player2}_AvailableMoves").get
       val wonBy = if (doc.getAs[String]("wonBy").get == player1) 1 else 2
-      val creationTime = doc.getAs[Int]("creationTime").get
+      val creationTime = doc.getAs[Long]("creationTime").get
       Game(id, 
         player1, player2, 
         player1Board, player2Board, 

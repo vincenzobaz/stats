@@ -24,11 +24,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
   def receive: Receive = waitingRequest
 
   def waitingRequest: Receive = {
-    // This case will be removed when the getAge will work
-    // case ComputeStatsWithTimeline(userID, timeline, allTime) =>
-    //   val service = context.actorOf(RetrievingService.props(database))
-    //   service ! GetFirstPlayDate(userID)
-    //   context.become(waitingForRetrieving(sender, userID))
     
     case ComputeStatistics(userID) =>
 

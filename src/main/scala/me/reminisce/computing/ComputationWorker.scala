@@ -15,8 +15,8 @@ import reactivemongo.api.BSONSerializationPack
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Success
-import org.joda.time._
-//import com.github.nscala_time.time.Imports._
+//import org.joda.time._
+import com.github.nscala_time.time.Imports._
 
 object ComputationWorker {
   def props(database: DefaultDB, kind: IntervalKind, ago: Int): Props = { 
@@ -85,12 +85,9 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
     }
   }
 
-// TODO : Aggregations !
   def computeAmount(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
     import me.reminisce.model.DatabaseCollection
-    val a: Long = from.getMillis
 
-//    println(s"$kind $ago $from $to ${from.getMillis()} ${to.getMillis()} $a")
     val userScore = s"${userID}_Scores"
     val query = BSONDocument(
                 "status" -> "ended",
@@ -98,12 +95,10 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
                   "$exists" -> true
                   ),
                 "creationTime" -> BSONDocument(
-                  // "$gte" -> from.getMillis,
+                  "$gte" -> from.getMillis,
                   "$lt" -> to.getMillis
                   )
               )
-
-    //TODO : Nscala-time getMillis doesn't work !
 
     val s: Future[List[Game]] = database[BSONCollection](
         DatabaseCollection.gameCollection).find(query).cursor[Game](
@@ -129,12 +124,10 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
                   ),
                 "wonBy" -> userID,
                 "creationTime" -> BSONDocument(
-                  // "$gte" -> from.getMillis,
+                  "$gte" -> from.getMillis,
                   "$lt" -> to.getMillis
                   )
               )
-
-    //TODO : Nscala-time getMillis doesn't work !
 
     val s: Future[List[Game]] = database[BSONCollection](
         DatabaseCollection.gameCollection).find(query).cursor[Game](
@@ -160,12 +153,10 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
                   ),
                 "wonBy" -> BSONDocument("$ne" -> userID),
                 "creationTime" -> BSONDocument(
-                  // "$gte" -> from.getMillis,
+                  "$gte" -> from.getMillis,
                   "$lt" -> to.getMillis
                   )
               )
-
-    //TODO : Nscala-time getMillis doesn't work !
 
     val s: Future[List[Game]] = database[BSONCollection](
         DatabaseCollection.gameCollection).find(query).cursor[Game](
@@ -199,7 +190,6 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
       QuestionsBreakDown(k, total, correct, percent)
     }
 
-
     import me.reminisce.model.DatabaseCollection
     val userScore = s"${userID}_Scores"
     val query = BSONDocument(
@@ -208,7 +198,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
                   "$exists" -> true
                   ),
                   "creationTime" -> BSONDocument(
-                  //"$gte" -> from.getMillis,
+                  "$gte" -> from.getMillis,
                   "$lt" -> to.getMillis
                   )
               )
@@ -252,7 +242,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
                   "$exists" -> true
                   ),
                   "creationTime" -> BSONDocument(
-                  //"$gte" -> from.getMillis,
+                  "$gte" -> from.getMillis,
                   "$lt" -> to.getMillis
                   )
               )
