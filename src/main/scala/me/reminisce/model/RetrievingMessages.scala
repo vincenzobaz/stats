@@ -18,4 +18,5 @@ object RetrievingMessages {
   case class StatisticsRetrieved(stat: StatResponse) extends RestMessage
   case class StatisticsNotFound(message: String) extends RestMessage    
   case class FirstPlayDate(date: DateTime)
-  }
+  case class UserNotFound(message: String) extends RestMessage
+  } 

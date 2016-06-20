@@ -2,10 +2,12 @@ package me.reminisce.computing
 
 import akka.actor._
 import me.reminisce.statistics.StatisticEntities._
+import me.reminisce.server.GameEntities._
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.statistics.StatisticEntities.IntervalKind.IntervalKind
-
+import me.reminisce.statistics.StatisticEntities.QuestionsBreakDownKind.QuestionsBreakDownKind
 import reactivemongo.bson.{BSONDocument, BSONArray}
+import reactivemongo.api.collections.bson._
 import reactivemongo.api.DefaultDB
 import reactivemongo.api.commands.Command
 import reactivemongo.api.BSONSerializationPack
@@ -13,8 +15,8 @@ import reactivemongo.api.BSONSerializationPack
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Success
-
-import com.github.nscala_time.time.Imports._
+import org.joda.time._
+//import com.github.nscala_time.time.Imports._
 
 object ComputationWorker {
   def props(database: DefaultDB, kind: IntervalKind, ago: Int): Props = { 
@@ -47,7 +49,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
         case SubStatisticKind.gamePlayedAgainst => computeGamesPlayedAgainst(client, userID, from, to)
       }
 
-    case m => log.info(s"Unexpected message $m received")
+    case m => log.info(s"[CW] Unexpected message $m received")
   }
 
   def waitingSubStats(client: ActorRef, userID: String, stats: StatsOnInterval, remaining: Int): Receive = {
@@ -69,7 +71,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
       case GamesPlayedAgainstStat(games) =>
         val newStats = StatsOnInterval(ago, amount, won, lost, questionBreakDown, games)
         isComplete(userID, client, newStats, remaining)
-      case o => log.info(s"Unexpected message $o received in ComputationWorker")
+      case o => log.info(s"[CW] Unexpected message $o received in ComputationWorker")
     }
   }
 
@@ -77,6 +79,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
     val newRemaining = remaining -1
     if (newRemaining == 0){
       client ! ResponseStatOnInterval(stat)
+      context.become(waitingRequest)
     } else {
       context.become(waitingSubStats(client, userID, stat, newRemaining))
     }
@@ -84,70 +87,153 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
 
 // TODO : Aggregations !
   def computeAmount(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    println(from.getMillis)
     import me.reminisce.model.DatabaseCollection
-    val idScores = "$" + userID + "_Scores"
-    // TODO add the interval condition
-    val unifiedQuery = BSONDocument(
-      "aggregate" -> DatabaseCollection.gameCollection,
-      "pipeline" -> BSONArray(
-        BSONDocument(
-          "$match" -> BSONDocument(
-            "status" -> "ended",
-            "creationTime" -> BSONDocument("$gt" -> from.getMillis)/*,
-            "creationTime" -> BSONDocument("$lt" -> from.getMillis)*/
-            )
-        ), 
-        BSONDocument(
-          "$group" -> BSONDocument(
-            "_id" -> idScores,
-            "count" -> BSONDocument("$sum" -> 1)
-          )
-        )
-      )
-    )
+    val a: Long = from.getMillis
 
-    val runner = Command.run(BSONSerializationPack)
+//    println(s"$kind $ago $from $to ${from.getMillis()} ${to.getMillis()} $a")
+    val userScore = s"${userID}_Scores"
+    val query = BSONDocument(
+                "status" -> "ended",
 
-    val s : Future[BSONDocument] = runner.apply(database, runner.rawCommand(unifiedQuery)).one[BSONDocument]
-    s.onComplete{
-      case Success(result) => 
-        result.get("result") match { 
-          case Some(array: BSONArray) =>
-            array.get(0) match {
-              case Some(doc: BSONDocument) =>
-                val count = doc.getAs[Int]("count")
-                count match {
-                  case Some(a) =>  client ! AmountStat(a)
-                  case _ =>  client ! AmountStat(0)
-                }               
-              case e => 
-                client ! AmountStat(0)
-                log.info(s"No results for the user $userID")
-            }
-          case e =>
-            client ! AmountStat(0)
-            log.info(s"Error: $e is not a BSONArray")
-        }
-      case error =>
-        client ! AmountStat(0)
-        log.info(s"The command has failed with error: $error")
+                userScore -> BSONDocument(
+                  "$exists" -> true
+                  ),
+                "creationTime" -> BSONDocument(
+                  // "$gte" -> from.getMillis,
+                  "$lt" -> to.getMillis
+                  )
+              )
+
+    //TODO : Nscala-time getMillis doesn't work !
+
+    val s: Future[List[Game]] = database[BSONCollection](
+        DatabaseCollection.gameCollection).find(query).cursor[Game](
+        ).collect[List]()
+
+      s.onComplete{
+        case Success(games)  =>
+          client ! AmountStat(games.size)
+        case f =>
+          log.info(s"Failure while getting stats. Error: $f ")
+          client ! AmountStat(0)
     }
   }
 
   def computeWon(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! WonStat(0)
+    import me.reminisce.model.DatabaseCollection
+    
+    val userScore = s"${userID}_Scores"
+    val query = BSONDocument(
+                "status" -> "ended",
+
+                userScore -> BSONDocument(
+                  "$exists" -> true
+                  ),
+                "wonBy" -> userID,
+                "creationTime" -> BSONDocument(
+                  // "$gte" -> from.getMillis,
+                  "$lt" -> to.getMillis
+                  )
+              )
+
+    //TODO : Nscala-time getMillis doesn't work !
+
+    val s: Future[List[Game]] = database[BSONCollection](
+        DatabaseCollection.gameCollection).find(query).cursor[Game](
+        ).collect[List]()
+
+      s.onComplete{
+        case Success(games)  =>
+          client ! WonStat(games.size)
+        case f =>
+          log.info(s"Failure while getting stats. Error: $f ")
+          client ! WonStat(0)
+    }
   }
 
   def computeLost(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! LostStat(0)
+    import me.reminisce.model.DatabaseCollection
+    
+    val userScore = s"${userID}_Scores"
+    val query = BSONDocument(
+                "status" -> "ended",
+
+                userScore -> BSONDocument(
+                  "$exists" -> true
+                  ),
+                "wonBy" -> BSONDocument("$ne" -> userID),
+                "creationTime" -> BSONDocument(
+                  // "$gte" -> from.getMillis,
+                  "$lt" -> to.getMillis
+                  )
+              )
+
+    //TODO : Nscala-time getMillis doesn't work !
+
+    val s: Future[List[Game]] = database[BSONCollection](
+        DatabaseCollection.gameCollection).find(query).cursor[Game](
+        ).collect[List]()
+
+      s.onComplete{
+        case Success(games)  =>
+          client ! LostStat(games.size)
+        case f => 
+          log.info(s"Failure while getting stats. Error: $f ")
+          client ! LostStat(0)
+    }
   }
 
   def computeQuestionBreakDown(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
-    client ! QuestionBreakDownStat(List())
+    import me.reminisce.model.DatabaseCollection
+    val userScore = s"${userID}_Scores"
+    val query = BSONDocument(
+                "status" -> "ended",
+
+                userScore -> BSONDocument(
+                  "$exists" -> true
+                  ),
+                  "creationTime" -> BSONDocument(
+                  //"$gte" -> from.getMillis,
+                  "$lt" -> to.getMillis
+                  )
+              )
+    val s: Future[List[Game]] = database[BSONCollection](
+        DatabaseCollection.gameCollection).find(query).cursor[Game](
+        ).collect[List]()
+
+      s.onComplete{
+        case Success(games)  =>
+          if(!games.isEmpty){
+            val l = QuestionsBreakDownKind.values.map(v => getQuestionsBreakDownForKind(v, games, userID)).toList
+              client ! QuestionBreakDownStat(l) 
+            } else {
+              client ! QuestionBreakDownStat(List())
+            }
+        case f => 
+          log.info(s"Failure while getting stats. Error: $f ")
+          client ! QuestionBreakDownStat(List())
+
+  }
   }
 
   def computeGamesPlayedAgainst(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
     client ! GamesPlayedAgainstStat(List())
+
+  }
+  private def getQuestionsBreakDownForKind(k: QuestionsBreakDownKind, games: List[Game], userID: String) : QuestionsBreakDown = {
+    val (total, correct) = games.foldLeft((0, 0)){
+      case ((t, c), Game(_, p1, p2, p1b, p2b, _, _, _, _, _, _, _, _, _)) =>
+        val tiles = if (p1 == userID) p1b.tiles else p2b.tiles
+        val stats = tiles.foldLeft((0,0)) {
+          case(acc2, Tile(questionKind, _, _, _, _, score, ans, dis)) =>
+            if(k == QuestionsBreakDownKind.withName(questionKind) && ans && !dis)
+              (acc2._1 + 3, acc2._1 + score)
+            else
+              acc2            
+        }
+        (t + stats._1, c + stats._2)
+    }
+    val percent: Double = if(total != 0) correct / total else 0.0
+    QuestionsBreakDown(k, total, correct, percent)
   }
 }

@@ -29,7 +29,7 @@ class ComputationManager(database: DefaultDB, kind: IntervalKind) extends Actor 
         worker ! ComputeStatsInInterval(userID, interval._1, interval._2)
       }
       context.become(WaitingForResponses(sender, maxValue + 1))
-    case m => log.info(s"Unexpected message $m received in waitingForRequest")
+    case m => log.info(s"[CM $kind] Unexpected message $m received in waitingForRequest")
   }
 
   def WaitingForResponses(client: ActorRef, remaining: Int, stats: List[StatsOnInterval] = List()): Receive = {

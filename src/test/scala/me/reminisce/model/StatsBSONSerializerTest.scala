@@ -233,7 +233,6 @@ class StatsBSONSerializersTest extends FunSuite {
   // ***** Stats *****
 
   val now: DateTime = DateTime.now
-  println(s"now: $now")
   val stats = Stats("userID123", Some(countWin), Some(averageScore), Some(countQuestion), Some(now), Some("idStat456"))
   val docStats = BSONDocument(
     "_id" -> "idStat456",
@@ -251,8 +250,6 @@ class StatsBSONSerializersTest extends FunSuite {
     assert(bson.getAs[CountWinnerGame]("countWinnerGame") == docStats.getAs[CountWinnerGame]("countWinnerGame"))
     assert(bson.getAs[AverageScore]("averageScore") == docStats.getAs[AverageScore]("averageScore"))
     assert(bson.getAs[CountCorrectQuestion]("countCorrectQuestion") == docStats.getAs[CountCorrectQuestion]("countCorrectQuestion"))
-    println(s"bson: ${bson.getAs[DateTime]("computationTime")}")
-    println(s"doc: ${docStats.getAs[DateTime]("computationTime")}")
     assert(bson.getAs[DateTime]("computationTime") == docStats.getAs[DateTime]("computationTime"))
   }
   

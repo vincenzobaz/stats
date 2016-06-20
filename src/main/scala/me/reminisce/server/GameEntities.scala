@@ -403,7 +403,7 @@ implicit object GameWriter extends BSONDocumentWriter[Game] {
       val player2 = doc.getAs[String]("player2").get
       val player1Board = doc.getAs[Board](s"${player1}_Board").get
       val player2Board = doc.getAs[Board](s"${player2}_Board").get
-      val status = doc.getAs[String]("String").get
+      val status = doc.getAs[String]("status").get
       val playerTurn = doc.getAs[Int]("playerTurn").get
       val player1Scores = doc.getAs[Int](s"${player1}_Scores").get
       val player2Scores = doc.getAs[Int](s"${player2}_Scores").get

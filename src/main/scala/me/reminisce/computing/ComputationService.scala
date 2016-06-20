@@ -24,10 +24,12 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
   def receive: Receive = waitingRequest
 
   def waitingRequest: Receive = {
-
-    case ComputeStatsWithTimeline(userID, timeline, allTime) =>
-      splitRequestIntoManager(userID, timeline, allTime, sender) 
-        
+    // This case will be removed when the getAge will work
+    // case ComputeStatsWithTimeline(userID, timeline, allTime) =>
+    //   val service = context.actorOf(RetrievingService.props(database))
+    //   service ! GetFirstPlayDate(userID)
+    //   context.become(waitingForRetrieving(sender, userID))
+    
     case ComputeStatistics(userID) =>
 
       val service = context.actorOf(RetrievingService.props(database))
@@ -38,7 +40,8 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       log.info(s"Unexpected message $o received in waitingRequest state")
   }
 
-  def waitingComputation(client: ActorRef, userID: String,acc: FrequencyOfPlays, remaining: Int): Receive = {
+  def waitingComputation(
+      client: ActorRef, userID: String,acc: FrequencyOfPlays, remaining: Int): Receive = {
     val FrequencyOfPlays(d, w, m, y, a) = acc
 
     {
@@ -69,6 +72,9 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       sender ! PoisonPill
       val timeline = howManyToCompute(userID, date)
       splitRequestIntoManager(userID, timeline, true, client) 
+    case msg @ UserNotFound(message) =>
+      sender ! PoisonPill
+      client ! Abort
     case o => 
       log.info(s"Unexpected message $o received in waitingForretrieving state")
 
@@ -146,6 +152,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
     val months = Months.monthsBetween(firstPlay, today).getMonths
     val years = Years.yearsBetween(firstPlay, today).getYears
     val timeline = Timeline(userID, days, weeks, months, years)
+    println(timeline)
     timeline
   }
 }

@@ -42,13 +42,14 @@ object StatisticEntities {
     correct: Int,
     percentCorrect: Double
     )
-
+// TODO use the QuestionKind in GameEntities
   object QuestionsBreakDownKind extends Enumeration {
     type QuestionsBreakDownKind = Value
-    val MC = Value("MC")
-    val TL = Value("TL ")
-    val GEO = Value("GEO")
-    val ORD = Value("ORD")
+    val MultipleChoice = Value("MultipleChoice")
+    val Timeline = Value("Timeline")
+    val Geolocation = Value("Geolocation")
+    val Order = Value("Order")
+    val Misc = Value("Misc")
   } 
 
   implicit object DatetimeReader extends BSONReader[BSONDateTime, DateTime]{

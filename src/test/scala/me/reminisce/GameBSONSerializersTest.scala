@@ -101,10 +101,9 @@ class GameBSONSerializersTest extends FunSuite {
    val pageSubject = PageSubject("Blood Bowl", 
     "13590131663", 
     Some("https://reminisce.me"))
-    println(docPageSubject)
+  
   test("PageSubjectWrite") {
     val bson = BSON.writeDocument[PageSubject](pageSubject)
-    println(bson)
     assert(bson.getAs[String]("name") == docPageSubject.getAs[String]("name"))
     assert(bson.getAs[String]("pageId") == docPageSubject.getAs[String]("pageId"))
     assert(bson.getAs[String]("photoUrl") == docPageSubject.getAs[String]("photoUrl"))

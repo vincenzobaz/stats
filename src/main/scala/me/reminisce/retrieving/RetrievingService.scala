@@ -37,13 +37,13 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
       worker ! msg
       context.become(waitingForWorker(userID, sender))
 
-    case o => log.info(s"Unexpected message ($o) received in RetrievingService")
+    case o => log.info(s"[RS] Unexpected message ($o) received in waitingForMessages state")
   }
 
   /*
    * Wait for a response from a ComputationService.
    */
-  def waitingForComputation(userID: String, client: ActorRef): Receive = {
+  def waitingForComputation(userID: String, client: ActorRef, timeline: Timeline, allTime: Boolean): Receive = {
     case Done =>
       sender ! PoisonPill
       context.self ! PoisonPill
@@ -52,9 +52,10 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
       sender ! PoisonPill
       context.self ! PoisonPill
     case msg @ StatResponse(_, _, _) =>
-      client ! StatisticsRetrieved(msg)
+      val relevant = discardUselessStats(msg, timeline, allTime)
+      client ! StatisticsRetrieved(relevant)
       // Doesn't stop the computation service yet, wait for insertion notification
-    case o  => log.info(s"Unexpected message ($o) received in waitingForComputation state :(")
+    case o  => log.info(s"[RS] Unexpected message ($o) received in waitingForComputation state :(")
   }
 
   /*
@@ -65,16 +66,35 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
       client ! msg
       sender ! PoisonPill
       context.become(waitingForMessages)
+    case msg @ UserNotFound(message) =>
+      sender ! PoisonPill
+      client ! msg
     case StatisticsRetrieved(stats) =>
       sender ! PoisonPill
-      if((stats.computationTime + 1.days) >= DateTime.now)
-        client ! StatisticsRetrieved(stats)
-      else
+      if((stats.computationTime + 1.days) >= DateTime.now){
+        val relevant = discardUselessStats(stats, timeline, allTime)
+        client ! StatisticsRetrieved(relevant)
+      } else
         computeStatistics(userID, client, timeline, allTime)
       
     case StatisticsNotFound(msg) =>
         computeStatistics(userID, client, timeline, allTime)
     case o  => log.info(s"[RS] Unexpected message ($o) received in waitingForWorker state")
+  }
+  /*
+   * Keep only the intervals requested by the client
+   */
+  private def discardUselessStats(stats: StatResponse, timeline: Timeline, allTime: Boolean): StatResponse = {
+    val StatResponse(userID, frequencies, time) = stats
+    val FrequencyOfPlays(d, w, m, y, a) = frequencies
+    val newFreq = FrequencyOfPlays(
+      d.take(timeline.day),
+      w.take(timeline.week),
+      m.take(timeline.month),
+      y.take(timeline.year),
+      if(allTime) a else None
+    )
+    StatResponse(userID, newFreq, time)
   }
 
   /*
@@ -82,8 +102,9 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
    */
   private def computeStatistics(userID: String, client: ActorRef, timeline: Timeline, allTime: Boolean) = {
     val computationService = context.actorOf(ComputationService.props(database))
-    computationService ! ComputeStatsWithTimeline(userID, timeline, allTime)
-    context.become(waitingForComputation(userID, client))
+    //computationService ! ComputeStatsWithTimeline(userID, timeline, allTime)
+    computationService ! ComputeStatistics(userID)
+    context.become(waitingForComputation(userID, client, timeline, allTime))
   }
 
   /*
