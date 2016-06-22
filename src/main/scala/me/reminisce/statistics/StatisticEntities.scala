@@ -90,7 +90,7 @@ object StatisticEntities {
   implicit val gamesPlayedAgainstHandler: BSONHandler[BSONDocument, GamesPlayedAgainst] = Macros.handler[GamesPlayedAgainst]  
   implicit val statsOnIntervalHandler: BSONHandler[BSONDocument, StatsOnInterval] = Macros.handler[StatsOnInterval]
   implicit val frequencyOfPlaysHandler: BSONHandler[BSONDocument, FrequencyOfPlays] = Macros.handler[FrequencyOfPlays]
-  implicit val StatResponseHandler: BSONHandler[BSONDocument, StatResponse] = Macros.handler[StatResponse]
+  //implicit val StatResponseHandler: BSONHandler[BSONDocument, StatResponse] = Macros.handler[StatResponse]
   
   implicit object StatsHandlerReader extends BSONDocumentReader[StatResponse]{
     def read(doc: BSONDocument) : StatResponse = {
@@ -98,6 +98,16 @@ object StatisticEntities {
       val freq = doc.getAs[FrequencyOfPlays]("frequencies").get
       val time = doc.getAs[DateTime]("computationTime").get
       StatResponse(id, freq, time)
+    }
+  }
+  implicit object StatsHandlerWriter extends BSONDocumentWriter[StatResponse]{
+    def write(stats: StatResponse): BSONDocument = {
+      val StatResponse(id, freq, date) = stats
+      BSONDocument(
+        "userID" -> id,
+        "frequencies" -> freq,
+        "computationTime" -> date
+      )
     }
   }
 
