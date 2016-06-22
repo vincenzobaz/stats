@@ -37,22 +37,19 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
   val randomID: String = java.util.UUID.randomUUID.toString
   val randomUser1: String = java.util.UUID.randomUUID.toString
   val randomUser2: String = java.util.UUID.randomUUID.toString
-  
+  val urlInsert = "/insertEntity"
   "ServerServiceActor" must {
 
     "try to insert a Game." in {
 
-      val url = "/insertEntity"
-      
       val gameJson : String = JsonEntity.game(randomID, randomUser1, randomUser2)
-
       val postRequest = new HttpRequest(        
                           method = HttpMethods.POST,
-                          uri = url, 
+                          uri = urlInsert, 
                           entity = HttpEntity(`application/json`, gameJson)
                           )
-      val post = Post(url, gameJson)
-      assert(post.method == HttpMethods.POST)
+      
+      assert(postRequest.method == HttpMethods.POST)
       testService ! postRequest
       
       val responseOpt = Option(receiveOne(Duration(10, TimeUnit.SECONDS)))
@@ -63,14 +60,18 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
 
           val httpResponse = response.asInstanceOf[HttpResponse]
           val json = parse(httpResponse.entity.data.asString)
-          
+          json match {
+            case JObject(List((k, msg))) =>  
+              assert(k == "status")
+              assert(msg== JString("Done"))
+            case _ => fail("Fail to insert")
+          }          
         case None =>
           fail("Response is not defined.")
       }
-
     }
 
-    "try to retrieve Stats for an unknown user" in {
+    "try to retrieve Stats for an unknown user." in {
       val getRequest = new HttpRequest(uri = s"/stats?userId=NOT${randomUser1}")
       assert(getRequest.method == HttpMethods.GET)
       testService ! getRequest
@@ -83,7 +84,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
           json match {
             case JObject(List((k, msg))) =>  
               assert(k == "message")
-              assert(msg== JString(s"Statistics not found for NOT${randomUser1}"))
+              assert(msg == JString(s"Statistics not found for NOT${randomUser1}"))
             case _ => fail("Response is not defined.")
           }         
         case None =>
@@ -91,7 +92,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
       }
     }
 
-    "try to retrieve Stats for an existing user" in {
+    "try to retrieve Stats for an existing user." in {
       val getRequest = new HttpRequest(uri = s"/stats?userId=${randomUser1}")
       assert(getRequest.method == HttpMethods.GET)
       testService ! getRequest
@@ -109,6 +110,34 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
               fail("Response isn't a Stats object")
           }
           //TODO create deserializer for Stats
+        case None =>
+          fail("Response is not defined.")
+      }
+    } 
+    "try to insert a duplicate game" in {
+      val gameJson : String = JsonEntity.game(randomID, randomUser1, randomUser2)
+
+      val postRequest = new HttpRequest(        
+                          method = HttpMethods.POST,
+                          uri = urlInsert, 
+                          entity = HttpEntity(`application/json`, gameJson)
+                          )
+      assert(postRequest.method == HttpMethods.POST)
+      testService ! postRequest
+      
+      val responseOpt = Option(receiveOne(Duration(10, TimeUnit.SECONDS)))
+      
+      responseOpt match {
+        case Some(response) =>
+          assert(response.isInstanceOf[HttpResponse])
+          val httpResponse = response.asInstanceOf[HttpResponse]
+          val json = parse(httpResponse.entity.data.asString)
+          json match {
+            case JObject(a) =>  
+              assert(a.head._1 == "status")
+              assert(a.head._2 == JString("Aborted"))
+            case _ => fail("Fail to insert")
+          }          
         case None =>
           fail("Response is not defined.")
       }

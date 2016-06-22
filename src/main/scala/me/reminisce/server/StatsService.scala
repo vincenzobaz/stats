@@ -49,8 +49,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
       }
     } ~ path("insertEntity"){
           post{
-            println("headers:")
-            extract(_.request.headers).map(println)
+            extract(_.request.headers)
             entity(as[Game]) {
               game => {
                 insertDB {

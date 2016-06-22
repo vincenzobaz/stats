@@ -10,6 +10,6 @@ object InsertionMessages {
   case class InsertStatistic(stats: StatResponse)
   case class Inserted(ids: List[String])
 
-  case class InsertionDone(message: String) extends RestMessage
-  case class InsertionAbort(message: String) extends RestMessage
+  case class InsertionDone(status: String = "Done") extends RestMessage
+  case class InsertionAbort(status: String = "Aborted") extends RestMessage
 }

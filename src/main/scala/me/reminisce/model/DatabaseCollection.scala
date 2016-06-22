@@ -5,5 +5,5 @@ object DatabaseCollection{
    val gameCollection = "gameCollection"
    val gameTestCollection = "toTest"
    val cacheTestCollection = "toTestStats"
-   val UseCache: Boolean = false
+   val UseCache: Boolean = true
 }

@@ -147,7 +147,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
     val months = Months.monthsBetween(firstPlay, today).getMonths
     val years = Years.yearsBetween(firstPlay, today).getYears
     val timeline = Timeline(userID, days, weeks, months, years)
-    println(timeline)
     timeline
   }
 }
