@@ -131,7 +131,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         Map(daysManager, weeksManager, monthsManager, yearsManager)
 
     managersMaps.foreach { 
-      //TODO use another message with allTime
       case (manager, ref) => ref ! ComputeStatsWithTimeline(userID, timeline, allTime)
     }
     context.become(waitingComputation(client, userID, FrequencyOfPlays(), managersMaps.size))   

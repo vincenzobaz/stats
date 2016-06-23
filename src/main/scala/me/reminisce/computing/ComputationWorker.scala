@@ -15,7 +15,6 @@ import reactivemongo.api.BSONSerializationPack
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Success
-//import org.joda.time._
 import com.github.nscala_time.time.Imports._
 
 object ComputationWorker {
@@ -170,7 +169,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
           client ! LostStat(0)
     }
   }
-
+  // TODO: Do the aggregation in reactivemongo /!\
   def computeQuestionBreakDown(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
     val getQuestionsBreakDownForKind: ((QuestionsBreakDownKind, List[Game]) => 
         QuestionsBreakDown) = (k: QuestionsBreakDownKind, games: List[Game]) => {
@@ -219,7 +218,7 @@ class ComputationWorker(database: DefaultDB, kind: IntervalKind, ago: Int) exten
           client ! QuestionBreakDownStat(List())
     }
   }
-
+  // TODO: Do the aggregation in reactivemongo /!\
   def computeGamesPlayedAgainst(client: ActorRef, userID: String, from: DateTime, to: DateTime) = {
     val battleSummary: ((String, List[Game]) => GamesPlayedAgainst) = (opponentID: String, plays: List[Game]) => {
       val (nb, won) = plays.foldLeft((0, 0)){

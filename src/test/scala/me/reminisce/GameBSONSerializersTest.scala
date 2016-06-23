@@ -164,15 +164,12 @@ val geoLocationQuestion = GeolocationQuestion(
 
 test("GeolocationQuestionWrite") {
   val bson = BSON.writeDocument(geoLocationQuestion)
-//  val bson = GameQuestionWriter.write(geoLocationQuestion)
   assert(bson.getAs[Subject]("subject") == docGeoLocationQuestion.getAs[Subject]("subject"))
   assert(bson.getAs[Double]("range") == docGeoLocationQuestion.getAs[Double]("range"))
   assert(bson.getAs[Location]("defaultLocation") == docGeoLocationQuestion.getAs[Location]("defaultLocation"))
   assert(bson.getAs[Location]("answer") == docGeoLocationQuestion.getAs[Location]("answer"))
   assert(bson.getAs[String]("type") == docGeoLocationQuestion.getAs[String]("type"))
   assert(bson.getAs[String]("kind") == docGeoLocationQuestion.getAs[String]("kind"))
-  //assert(bson == docGeoLocationQuestion) 
- // TODO why we can not compare the whole documents ?
 }
 
 test("GeolocationQuestionRead") {    

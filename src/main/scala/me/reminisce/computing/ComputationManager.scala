@@ -58,8 +58,6 @@ class ComputationManager(database: DefaultDB, kind: IntervalKind) extends Actor 
 
     case AbortComputation => 
       client ! AbortComputation
-      // or should we add an empty statsonInterval ?
-      // the client will kill this service and all others workers
   }
   
   private def getInterval(ago: Int): (DateTime, DateTime) = {

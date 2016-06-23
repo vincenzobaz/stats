@@ -55,8 +55,7 @@ class RetrievingWorker(database: DefaultDB) extends Actor with ActorLogging {
         case Success(games)  =>
           if(!games.isEmpty) {
             val millis = games.head.creationTime
-            val temp = DateTime.now - 1.years
-            client ! FirstPlayDate(temp)
+            client ! FirstPlayDate(millis.toDateTime)
           } else {
             client ! UserNotFound(s"No game found for $userID")
           }
