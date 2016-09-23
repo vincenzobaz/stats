@@ -26,6 +26,7 @@ object Server extends App {
   val port = ApplicationConfiguration.serverPort
   // create and start our service actor
   val service = system.actorOf(Props[ServerServiceActor], "server-service")
+  println("ServerServiceActor created")
 
   // sets the default timezone to UTC
   DateTimeZone.setDefault(DateTimeZone.forID("UTC"))
