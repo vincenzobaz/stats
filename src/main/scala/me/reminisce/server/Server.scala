@@ -16,10 +16,11 @@ import scala.concurrent.duration.Duration
   * Application entry point.
   */
 object Server extends App {
-  // an ActorSystem to host our application in
-  implicit val system = ActorSystem("server")
-  implicit val context = ExecutionContext.Implicits.global
+
   val conf = ConfigFactory.load()
+  // an ActorSystem to host our application in
+  implicit val system = ActorSystem("server", conf)
+  implicit val context = ExecutionContext.Implicits.global
 
   val protocol = "http://"
   val hostName = ApplicationConfiguration.hostName
