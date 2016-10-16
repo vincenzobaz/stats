@@ -10,6 +10,7 @@ import com.github.nscala_time.time.Imports._
 object Stats {
 
   case class StatsEntities (
+    id: Option[BSONObjectID],
     userId: String,
     date: DateTime = DateTime.now,
     amount: Int,
@@ -41,7 +42,8 @@ object Stats {
    
   implicit object StatsReader extends BSONDocumentReader[StatsEntities]{
     def read(doc: BSONDocument): StatsEntities = {
-      val id = doc.getAs[String]("userId").get
+      val _id = doc.getAs[BSONObjectID]("_id")
+      val userId = doc.getAs[String]("userId").get
       val date = doc.getAs[DateTime]("date").get
       val amount = doc.getAs[Int]("amount").get
       val win = doc.getAs[Int]("win").get
@@ -49,13 +51,13 @@ object Stats {
       val tie = doc.getAs[Int]("tie").get
       val rivals = doc.getAs[Set[String]]("rivals").get
       val questionsByType = doc.getAs[QuestionsByType]("questionsByType").get
-      StatsEntities(id, date, amount, win, lost, tie, rivals, questionsByType)
+      StatsEntities(_id, userId, date, amount, win, lost, tie, rivals, questionsByType)
     }
   }
 
   implicit object StatsWriter extends BSONDocumentWriter[StatsEntities]{
     def write(stats: StatsEntities): BSONDocument = {
-      val StatsEntities(userId, date, amount, win, lost, tie, rivals, questionsByType) = stats
+      val StatsEntities(_id, userId, date, amount, win, lost, tie, rivals, questionsByType) = stats
       BSONDocument(
         "userId" -> userId,
         "date" -> date,

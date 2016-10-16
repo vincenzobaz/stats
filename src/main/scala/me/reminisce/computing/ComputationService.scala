@@ -10,6 +10,7 @@ import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.RetrievingMessages._
 import me.reminisce.model.Messages._
 import me.reminisce.model.DatabaseCollection
+import me.reminisce.statistics.Utils._
 import reactivemongo.api.DefaultDB
 import reactivemongo.bson.{BSONDocument, BSONArray, BSONString}
 import reactivemongo.api.collections.bson._
@@ -17,6 +18,7 @@ import reactivemongo.api.commands.Command
 import org.joda.time.DateTime
 import scala.util.{Failure, Success}
 import scala.concurrent.Future
+import com.github.nscala_time.time.Imports._
 
 object ComputationService {
   def props(database: DefaultDB): Props =
@@ -62,31 +64,52 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         
       val now: DateTime = DateTime.now
       val midnightToday = new DateTime(now.getYear, now.getMonthOfYear, now.getDayOfMonth, 0 , 0 , 0)
+      log.error(s"heure : $midnightToday ${midnightToday.getMillis}")
       val queryStats = BSONDocument(
-          "userId" -> userId,
-          "date" -> BSONDocument(
-            "$gte" -> midnightToday.getMillis
-            )
+          "userId" -> userId
         )
       val s : Future[List[StatsEntities]] = collectionStats.find(queryStats).cursor[StatsEntities]().collect[List](1)
       s.onComplete {
         case Success(existingStats) =>
-        if(existingStats.isEmpty) {
-          log.debug("new stats")
-          val future = collectionStats.insert(stats)
+          val todayStats = existingStats.filter(x => x.date > midnightToday)
+          log.error(s"stats: ${todayStats.length}")
+          if(todayStats.isEmpty) {
+            log.debug("new stats")
+            val future = collectionStats.insert(stats)
 
-          future.onComplete {
-            case Failure(e) => 
-              context.parent ! Abort
-            case Success(lastError) => 
-              context.parent ! Done
+            future.onComplete {
+              case Failure(e) => 
+                context.parent ! Abort
+              case Success(lastError) => 
+                context.parent ! Done
+            }
+          } else {
+            log.debug("Stats already exists")
+            val selector = BSONDocument("_id" -> stats.id)
+            val StatsEntities(None, userId, date, amount, win, lost, tie, rivals, questionsByType) = stats
+
+            val modifier = BSONDocument(
+                "$set" -> BSONDocument(
+                "date" -> date,
+                "amount" -> amount,
+                "win" -> win,
+                "lost" -> lost,
+                "tie" -> tie,
+                "rivals" -> rivals,
+                "questionsByType" -> questionsByType))
+
+            val futureUpdate = collectionStats.update(selector, modifier)
+            futureUpdate.onComplete {
+              case Success(lastError) =>
+                context.parent ! Done
+              case Failure(e) =>
+                log.error("Update failure")
+                context.parent ! Abort
+            }
           }
-        } else {
-          log.debug("Stats already exists")
-          ???
-        }
         case Failure(e) =>
           log.error(s"Could not reach the database: $e")
+          context.parent ! Abort
       }
     }
 
@@ -110,12 +133,12 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
           if (p1 == userId) r + p2 else r + p1
       }
       val questionsByType = emptyQuestionsByType()
-      val stats = StatsEntities(userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
+      val stats = StatsEntities(None, userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
       stats
     }
 
     def emptyStats(userId: String): StatsEntities = {
-      StatsEntities(userId, DateTime.now, 0, 0, 0, 0, Set(), emptyQuestionsByType())
+      StatsEntities(None, userId, DateTime.now, 0, 0, 0, 0, Set(), emptyQuestionsByType())
     }
     def emptyQuestionsByType(): QuestionsByType = {
       val e = QuestionStats(0, 0, 0, 0, 0)
