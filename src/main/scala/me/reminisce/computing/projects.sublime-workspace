@@ -1,0 +1,950 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Ter",
+				"TermIsStuck"
+			],
+			[
+				"is",
+				"isNumeric"
+			],
+			[
+				"as",
+				"asString"
+			],
+			[
+				"H",
+				"HttpResponse"
+			],
+			[
+				"response",
+				"responseOpt"
+			],
+			[
+				"gam",
+				"gameJson"
+			],
+			[
+				"htp",
+				"httpResponse"
+			],
+			[
+				"rand",
+				"randomUser1"
+			],
+			[
+				"com",
+				"computationTime"
+			],
+			[
+				"BSON",
+				"BSONDocument"
+			],
+			[
+				"ra",
+				"randomUser2"
+			],
+			[
+				"Json",
+				"JsonEntity"
+			],
+			[
+				"u",
+				"uid1"
+			],
+			[
+				"get",
+				"getMillis"
+			],
+			[
+				"fo",
+				"foldLeft"
+			],
+			[
+				"G",
+				"GamesPlayedAgainstStat"
+			],
+			[
+				"ma",
+				"maxValue"
+			],
+			[
+				"ques",
+				"QuestionBreakDownStat"
+			],
+			[
+				"Ques",
+				"QuestionBreakDown"
+			],
+			[
+				"Que",
+				"QuestionBreakDownStat"
+			],
+			[
+				"Quest",
+				"questionBreakDown"
+			],
+			[
+				"B",
+				"BSONDocument"
+			],
+			[
+				"BS",
+				"BSONDocument"
+			],
+			[
+				"am",
+				"AmountStat"
+			],
+			[
+				"cre",
+				"creationTime"
+			],
+			[
+				"fir",
+				"firstPlay"
+			],
+			[
+				"to",
+				"toDateTime"
+			],
+			[
+				"Wai",
+				"waitingForMessages"
+			],
+			[
+				"new",
+				"newFreq"
+			],
+			[
+				"Stat",
+				"StatResponse"
+			],
+			[
+				"Sta",
+				"StatResponse"
+			],
+			[
+				"BSN",
+				"BSONDocument"
+			],
+			[
+				"Stats",
+				"StatResponse"
+			],
+			[
+				"Actro",
+				"ActorRef"
+			],
+			[
+				"fre",
+				"frequencies"
+			],
+			[
+				"waiting",
+				"waitingForWorker"
+			],
+			[
+				"Retr",
+				"RetrievingWorker"
+			],
+			[
+				"compute",
+				"computeWon"
+			],
+			[
+				"wai",
+				"waitingForRetrieving"
+			],
+			[
+				"ac",
+				"actorOf"
+			],
+			[
+				"wa",
+				"waitingForMessages"
+			],
+			[
+				"Stati",
+				"StatisticEntities"
+			],
+			[
+				"stat",
+				"statistics"
+			],
+			[
+				"game",
+				"gameCollection"
+			],
+			[
+				"inser",
+				"insertStatInDB"
+			],
+			[
+				"time",
+				"timeline"
+			],
+			[
+				"us",
+				"userScore"
+			],
+			[
+				"play",
+				"player2"
+			],
+			[
+				"pl",
+				"player2"
+			],
+			[
+				"all",
+				"allTimeManager"
+			],
+			[
+				"mana",
+				"managersMaps"
+			],
+			[
+				"al",
+				"allTime"
+			],
+			[
+				"Year",
+				"yearly"
+			],
+			[
+				"wi",
+				"waitingSubStats"
+			],
+			[
+				"games",
+				"games"
+			],
+			[
+				"gamesP",
+				"gamePlayedAgainst"
+			],
+			[
+				"qu",
+				"questionBreakDown"
+			],
+			[
+				"P",
+				"PercentCorrectStat"
+			],
+			[
+				"computeC",
+				"computecorrect"
+			],
+			[
+				"comp",
+				"computeAmount"
+			],
+			[
+				"Comp",
+				"ComputationWorker"
+			],
+			[
+				"sor",
+				"sortedStats"
+			],
+			[
+				"c",
+				"ComputationManager"
+			],
+			[
+				"wain",
+				"WaitingForResponses"
+			],
+			[
+				"int",
+				"IntervalKind"
+			],
+			[
+				"IN",
+				"IntervalKind"
+			],
+			[
+				"Acto",
+				"ActorRef"
+			],
+			[
+				"In",
+				"IntervalKind"
+			],
+			[
+				"for",
+				"foreach"
+			],
+			[
+				"yea",
+				"yearsManager"
+			],
+			[
+				"mon",
+				"monthsManager"
+			],
+			[
+				"wee",
+				"weeksManager"
+			],
+			[
+				"usre",
+				"UserLife"
+			],
+			[
+				"how",
+				"howManyToCompute"
+			],
+			[
+				"t",
+				"today"
+			],
+			[
+				"fi",
+				"firstPlay"
+			],
+			[
+				"pos",
+				"possibleFrequency"
+			],
+			[
+				"po",
+				"possibleFrequency"
+			],
+			[
+				"Ret",
+				"RetrieveStats"
+			],
+			[
+				"compu",
+				"computeStatistics"
+			],
+			[
+				"fr",
+				"frequencyOfPlays"
+			],
+			[
+				"day",
+				"daysWritten"
+			],
+			[
+				"doc",
+				"docFrequency"
+			],
+			[
+				"sta",
+				"statsOnInterval"
+			],
+			[
+				"quest",
+				"questionGiven"
+			],
+			[
+				"questi",
+				"questionWritten"
+			],
+			[
+				"co",
+				"correctStats"
+			],
+			[
+				"a",
+				"amount"
+			],
+			[
+				"pr",
+				"percentCorrect"
+			],
+			[
+				"tota",
+				"totalAmount"
+			],
+			[
+				"QuestionBrea",
+				"QuestionsBreakDown"
+			],
+			[
+				"que",
+				"questionBDType"
+			],
+			[
+				"StatsR",
+				"StatResponse"
+			],
+			[
+				"Game",
+				"GamesPlayedAgainst"
+			],
+			[
+				"Stars",
+				"StatsOnInterval"
+			],
+			[
+				"HTT",
+				"HttpRequest"
+			],
+			[
+				"HT",
+				"HttpHeaders"
+			],
+			[
+				"Http",
+				"HttpHeaders"
+			],
+			[
+				"HTTP",
+				"HttpMethods"
+			],
+			[
+				"test",
+				"testService"
+			],
+			[
+				"Htt",
+				"HttpRequest"
+			],
+			[
+				"U",
+				"UTF-8"
+			],
+			[
+				"re",
+				"request"
+			],
+			[
+				"in",
+				"inserting"
+			],
+			[
+				"Ins",
+				"Insertion"
+			],
+			[
+				"Inser",
+				"InsertionDone"
+			],
+			[
+				"tr",
+				"tryAgain"
+			],
+			[
+				"retri",
+				"retrieveStats"
+			],
+			[
+				"Retri",
+				"RetrievingWorker"
+			],
+			[
+				"Retrie",
+				"RetrievingService"
+			],
+			[
+				"user",
+				"userID"
+			],
+			[
+				"S",
+				"StatsProcessingService"
+			],
+			[
+				"Com",
+				"ComputationService"
+			],
+			[
+				"im",
+				"import"
+			],
+			[
+				"st",
+				"Statistic"
+			],
+			[
+				"St",
+				"StatisticKind"
+			],
+			[
+				"R",
+				"RestMessage"
+			],
+			[
+				"Count",
+				"CountWinnerGame"
+			],
+			[
+				"Da",
+				"DateTime"
+			],
+			[
+				"aver",
+				"average"
+			],
+			[
+				"_",
+				"_Scores"
+			],
+			[
+				"Res",
+				"ResponseMessage"
+			],
+			[
+				"id",
+				"idScores"
+			],
+			[
+				"Mon",
+				"MongoDatabaseService"
+			],
+			[
+				"s",
+				"s"
+			],
+			[
+				"cou",
+				"countCorrectQuestion"
+			],
+			[
+				"cun",
+				"CountCorrectQuestion"
+			],
+			[
+				"Coun",
+				"CountCorrectQuestion"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 139.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects",
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic",
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic/project",
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic/src",
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic/src/main",
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic/src/main/scala",
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic/src/main/scala/fos"
+	],
+	"file_history":
+	[
+		"/home/audrey/Documents/Etude/MA3/FOS/FoS_Projects/1-arithmetic/src/main/scala/fos/Arithmetic.scala",
+		"/home/audrey/Documents/Etude/Assistanats/bruschini/pubs.bib",
+		"/home/audrey/Documents/Etude/Assistanats/bruschini/publications2.bib",
+		"/home/audrey/Downloads/test.bib",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/GameBSONSerializersTest.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/model/DatabaseCollection.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/server/ServerServiceActorSpec.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/model/RetrievingMessages.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/inserting/InsertionService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/model/InsertionMessages.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/computing/ComputationService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/computing/ComputationWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/server/JsonEntity.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/model/Message.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/model/StatsBSONSerializerTest.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/StatsService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/inserting/InsertionWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/retrieving/RetrievingService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/retrieving/RetrievingWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/model/ComputationMessages.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/GameEntities.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/statistics/StatisticEntities.scala",
+		"/home/audrey/Documents/Etude/projectMA/testAggregation.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/computing/ComputationManager.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/project/target/resolution-cache/reports/default-stats-build-scala-tool.xml",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/database/DatabaseTestHelper.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/Server.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/retrieving/retrievingWorker.scala",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Bee.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Bee.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/CFSM.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/CFSM.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Collider.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Collider.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Env.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Env.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Flower.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Flower.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/FlowerGenerator.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/FlowerGenerator.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Hive.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/Hive.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/ScoutBee.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/WorkerBee.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/WorkerBee.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/World.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/World.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/RenduFinaux/A corriger/bees-61/partie6/src/Env/ScoutBee.hpp",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/StatsBSONSerializerTest.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/build.sbt",
+		"/home/audrey/Documents/Etude/projectMA/stats/project/plugins.sbt",
+		"/home/audrey/Downloads/OMVCCTest3.java",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/ServerServiceActor.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/QuestionSerializer.scala",
+		"/home/audrey/Documents/Etude/projectMA/BSONDocument",
+		"/home/audrey/Downloads/science.bib",
+		"/home/audrey/Downloads/EPFL-POSTER-191249.bib",
+		"/home/audrey/Downloads/Biblio-Bibtex (1).bib",
+		"/home/audrey/Downloads/Biblio-Bibtex.bib",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/statsProcessing/StatsProcessingService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/statsProcessing/MongoDatabaseWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/statsProcessing/MongoDatabaseService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/statsProcessing/StatsProcessingWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/database/DatabaseTester.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/model/InsertingMessages.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/database/MongoDatabaseServiceSpec.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/database/DeletionServiceSpec.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/database/DatabaseTests.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/database/MongoDatabaseServiceSuite.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/database/MongoDatabaseWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/database/MongoDatabaseService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/database/DummyService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/dummy/DummyWorker.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/database/MongoDBEntities.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/dummy/DummyService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/BSONSerializersTest.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/resources/boards.json",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/test/scala/me/reminisce/GameEntitiesTests.scala",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/prjsv-2016/projet/src/Env/FlowerGenerator.hpp",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/prjsv-2016/projet/src/Env/FlowerGenerator.cpp",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/jsonserializer/StatsFormatter.scala",
+		"/home/audrey/Downloads/testbib.bib",
+		"/home/audrey/Downloads/EPFL-CONF-213513.bib",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/project/step1/src/Env/World.cpp",
+		"/home/audrey/Documents/Etude/Assistanats/bruschini/infoscience.epfl.ch",
+		"/home/audrey/Documents/Etude/Assistanats/progSV/MyProject/partie2/src/Env/World.cpp",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/Player.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/debug/Testdutest.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/debug/RandomEventGenerator.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/debug/GameStatePrinter.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/Ticks.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/GameState.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/server/Block.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/Time.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/SubCell.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/PlayerID.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/Lists.java",
+		"/home/audrey/Downloads/Telegram Desktop/XBlast_2016/src/ch/epfl/xblast/Direction.java",
+		"/home/audrey/Documents/Projets/startHack/start-hack2016/app/templates/app/contact.html",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/utils/EnumUtils.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/Message.scala",
+		"/home/audrey/Documents/Etude/Assistanats/infoGc/Java/Adbu Rahmaty/monprojetGc/src/monprojetGc/Projet1.java",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/ApplicationConfiguration.scala",
+		"/home/audrey/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/audrey/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/audrey/.config/sublime-text-3/Packages/User/Scala.sublime-settings",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/server/domain/RESTHandler.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/database/DatabaseService.scala",
+		"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/database/databaseService.scala",
+		"/home/audrey/.config/sublime-text-2/Packages/User/Plain text.sublime-settings",
+		"/home/audrey/Documents/Etude/projectMA/game-creator/src/main/scala/me/reminisce/database/MongoDBEntities.scala"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/home/audrey/Documents/Etude/projectMA/stats/src/main/scala/me/reminisce/computing",
+			"",
+			"<current file>",
+			"",
+			"src/test/scala/me/reminisce/server/ServerServiceActorSpec.scala",
+			"src/"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"isVal",
+			"//",
+			"firsr",
+			"todo",
+			"println",
+			"InsertionDone",
+			"asString",
+			"Roger Küng",
+			"}",
+			"println",
+			"println\n",
+			")\n",
+			"println",
+			"PoisonPill sent",
+			"println",
+			"waitingForAge",
+			"waitForAge",
+			"print",
+			"println",
+			"done",
+			"Done",
+			"waitingForComputation",
+			"println",
+			"waitingforrequest",
+			"frequenciesto",
+			"howmany",
+			"Timeline",
+			"StatResponse",
+			"cacheTest",
+			"gameTest",
+			"cachedTest",
+			"databasec",
+			"DatabaseCollection",
+			"  \n",
+			"\n    ",
+			"the",
+			"computationTime",
+			"postHeader",
+			"\"wucQxKHvs5W9Ao9y9\"",
+			"\"MmYXQ5EKSgdjzP3uJ\"",
+			"stat",
+			"worker",
+			"InsertionService",
+			"entityme",
+			"_",
+			"getAve",
+			"_",
+			"running",
+			"dummyworker",
+			"aver",
+			"stat",
+			"todo",
+			"???",
+			"TODO",
+			"EntityMessage",
+			"unexpected",
+			" $",
+			"    ",
+			"misc",
+			"cells",
+			"postsubj",
+			"GameQuestion",
+			"DummyWorker",
+			"search",
+			")\n",
+			"search",
+			"res",
+			"StatsFormatter",
+			"StatFormatter",
+			"CustomSer",
+			"executeQ",
+			"execute",
+			"statsRoutes",
+			"statroute",
+			"override",
+			"DummyWorker",
+			"      \n",
+			"extends app",
+			"envOrElse"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"John Doe",
+			"$randomUser2",
+			"$randomUser1"
+		],
+		"reverse": false,
+		"show_context": false,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 26.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.unsaved_changes":
+	{
+		"height": 27.0
+	},
+	"pinned_build_system": "",
+	"project": "/home/audrey/Documents/Etude/MA3/FOS/projects.sublime-project",
+	"replace":
+	{
+		"height": 48.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"retri",
+				"src/main/scala/me/reminisce/retrieving/RetrievingWorker.scala"
+			],
+			[
+				"compu",
+				"src/main/scala/me/reminisce/computing/ComputationWorker.scala"
+			],
+			[
+				"comput",
+				"src/main/scala/me/reminisce/computing/ComputationWorker.scala"
+			],
+			[
+				"test",
+				"src/test/scala/me/reminisce/database/DatabaseTestHelper.scala"
+			],
+			[
+				"game",
+				"src/main/scala/me/reminisce/server/GameEntities.scala"
+			],
+			[
+				"retr",
+				"src/main/scala/me/reminisce/retrieving/RetrievingWorker.scala"
+			],
+			[
+				"stat",
+				"src/main/scala/me/reminisce/statistics/StatisticEntities.scala"
+			],
+			[
+				"insert",
+				"src/main/scala/me/reminisce/inserting/InsertionWorker.scala"
+			],
+			[
+				"gamen",
+				"src/main/scala/me/reminisce/server/GameEntities.scala"
+			],
+			[
+				"data",
+				"src/main/scala/me/reminisce/model/DatabaseCollection.scala"
+			],
+			[
+				"ge",
+				"src/main/scala/me/reminisce/server/GameEntities.scala"
+			],
+			[
+				"",
+				"src/main/scala/me/reminisce/dummy/DummyWorker.scala"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/Documents/Etude/MA3/CLP/clpProject.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 392.0,
+		"last_filter": "insertion",
+		"selected_items":
+		[
+			[
+				"insertion",
+				"InsertionService"
+			],
+			[
+				"",
+				"ComputeStatsWithTimeline"
+			]
+		],
+		"width": 392.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 164.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
