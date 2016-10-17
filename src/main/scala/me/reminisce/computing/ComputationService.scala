@@ -12,7 +12,7 @@ import me.reminisce.model.Messages._
 import me.reminisce.model.DatabaseCollection
 import me.reminisce.statistics.Utils._
 import reactivemongo.api.DefaultDB
-import reactivemongo.bson.{BSONDocument, BSONArray, BSONString}
+import reactivemongo.bson.{BSONDocument, BSONArray, BSONString, BSONObjectID}
 import reactivemongo.api.collections.bson._
 import reactivemongo.api.commands.Command
 import org.joda.time.DateTime
@@ -68,15 +68,12 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       val queryStats = BSONDocument(
           "userId" -> userId
         )
-      val s : Future[List[StatsEntities]] = collectionStats.find(queryStats).cursor[StatsEntities]().collect[List](1)
+      val s : Future[List[StatsEntities]] = collectionStats.find(queryStats).cursor[StatsEntities]().collect[List]()
       s.onComplete {
         case Success(existingStats) =>
           val todayStats = existingStats.filter(x => x.date > midnightToday)
-          log.error(s"stats: ${todayStats.length}")
           if(todayStats.isEmpty) {
-            log.debug("new stats")
             val future = collectionStats.insert(stats)
-
             future.onComplete {
               case Failure(e) => 
                 context.parent ! Abort
@@ -84,9 +81,9 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
                 context.parent ! Done
             }
           } else {
-            log.debug("Stats already exists")
-            val selector = BSONDocument("_id" -> stats.id)
-            val StatsEntities(None, userId, date, amount, win, lost, tie, rivals, questionsByType) = stats
+            val selector = BSONDocument("_id" -> todayStats.head.id)
+            println(s"stats id: ${stats.id}")
+            val StatsEntities(id, userId, date, amount, win, lost, tie, rivals, questionsByType) = stats
 
             val modifier = BSONDocument(
                 "$set" -> BSONDocument(
@@ -133,12 +130,14 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
           if (p1 == userId) r + p2 else r + p1
       }
       val questionsByType = emptyQuestionsByType()
-      val stats = StatsEntities(None, userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
+      val id = BSONObjectID.generate
+      println(s"Inserting stats $id")
+      val stats = StatsEntities(id, userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
       stats
     }
 
     def emptyStats(userId: String): StatsEntities = {
-      StatsEntities(None, userId, DateTime.now, 0, 0, 0, 0, Set(), emptyQuestionsByType())
+      StatsEntities(BSONObjectID.generate, userId, DateTime.now, 0, 0, 0, 0, Set(), emptyQuestionsByType())
     }
     def emptyQuestionsByType(): QuestionsByType = {
       val e = QuestionStats(0, 0, 0, 0, 0)
