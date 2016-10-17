@@ -82,7 +82,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
             }
           } else {
             val selector = BSONDocument("_id" -> todayStats.head.id)
-            println(s"stats id: ${stats.id}")
             val StatsEntities(id, userId, date, amount, win, lost, tie, rivals, questionsByType) = stats
 
             val modifier = BSONDocument(
@@ -131,7 +130,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       }
       val questionsByType = emptyQuestionsByType()
       val id = BSONObjectID.generate
-      println(s"Inserting stats $id")
       val stats = StatsEntities(id, userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
       stats
     }

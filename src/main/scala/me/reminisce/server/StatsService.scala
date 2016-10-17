@@ -14,6 +14,7 @@ import me.reminisce.model.InsertionMessages._
 import me.reminisce.model.RetrievingMessages._
 import me.reminisce.inserting.InsertionService
 import me.reminisce.retrieving.RetrievingService
+import com.github.nscala_time.time.Imports._
 
 object StatsService
 
@@ -35,8 +36,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   def actorRefFactory: ActorContext
 
   val db: DefaultDB
-  lazy val possibleFrequency: Set[String] = Set("day", "week", "month", "year")
-
+ 
   val statsRoutes = {
     
     import GameFormat._
@@ -58,7 +58,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
               } 
             }
           }
-    } ~ path("stats"){
+     } ~ path("stats"){
         get{
           parameterSeq {
             params =>        
@@ -73,7 +73,7 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
           }
         }
       }   
-  }
+    }
     
   private def insertDB(message: RestMessage) : Route = {
     val insertionService = context.actorOf(InsertionService.props(db))
@@ -85,32 +85,34 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
     ctx => perRequest(ctx, retrievingService, message)
   }
 
-  def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {    
-    lazy val IsNumeric = """^(\d+)$""".r
-    val (userID, frequency, allTime, error) = params.foldLeft(("", List[(String, Int)](), 0, 0)){
-      case (acc, (key, value)) => 
+  def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {
+    lazy val formatter = DateTimeFormat.forPattern("dd-MM-yyyy")
+
+    val (userId, from, to) = params.foldLeft(("", List[DateTime](), List[DateTime]())){
+      case ((id, f, t), (key, value)) =>
         key match {
-          case "userId" if acc._1.isEmpty => (acc._1 + value, acc._2, acc._3, acc._4)
-          case "frequency" =>
-            value.split(":") match {
-              case Array(k: String, IsNumeric(i)) if isValidFrequency(k, acc._2) => 
-                (acc._1, acc._2 :+ (k, i.toInt), acc._3, acc._4)
-              case _ => 
-                (acc._1, acc._2, acc._3, acc._4 + 1) 
-            }             
-          case "allTime" => (acc._1, acc._2, acc._3 + 1, acc._4)
-          case _ => (acc._1, acc._2, acc._3, acc._4 + 1)
-        }      
+          case "userId" if id.isEmpty => (id+value, f, t)
+          case "from" => 
+            try{
+              val date = DateTime.parse(value, formatter)
+              (id, f :+ date, t)
+            }
+            catch{
+              case e : Throwable => (id, f, t)
+            }
+          case "to" => 
+            try{
+              val date = DateTime.parse(value, formatter)
+              (id, f, t :+ date)
+            }
+            catch{
+              case e : Throwable => (id, f, t)
+            }
+          case _ => (id, f, t)
+        }
     }
-
-    lazy val a = allTime != 0
-    error match {
-      case 0 => Some(RetrieveStats(userID, frequency, a))
-      case _ => None
-    }
-  }
-
-  private def isValidFrequency(f: String, frequencies : List[(String, Int)]) : Boolean = {
-    possibleFrequency(f) && frequencies.forall{case (a, _) => a != f}
+    val optFrom = if(!from.isEmpty) Some(from.head) else None
+    val optTo = if(!to.isEmpty) Some(to.head) else None
+    Some(RetrieveStats(userId, optFrom, optTo))
   }
 }
