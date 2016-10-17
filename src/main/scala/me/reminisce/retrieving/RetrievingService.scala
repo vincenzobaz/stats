@@ -5,7 +5,6 @@ import me.reminisce.computing.ComputationService
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.DatabaseCollection
 import me.reminisce.model.Messages._
-import me.reminisce.statistics.StatisticEntities._
 import reactivemongo.api.DefaultDB
 import com.github.nscala_time.time.Imports._
 import reactivemongo.bson.{BSONDocument, BSONDateTime}

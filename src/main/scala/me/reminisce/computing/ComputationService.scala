@@ -64,7 +64,6 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         
       val now: DateTime = DateTime.now
       val midnightToday = new DateTime(now.getYear, now.getMonthOfYear, now.getDayOfMonth, 0 , 0 , 0)
-      log.error(s"heure : $midnightToday ${midnightToday.getMillis}")
       val queryStats = BSONDocument(
           "userId" -> userId
         )
@@ -99,7 +98,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
               case Success(lastError) =>
                 context.parent ! Done
               case Failure(e) =>
-                log.error("Update failure")
+                log.error(s"Failed to update stats: $e")
                 context.parent ! Abort
             }
           }
