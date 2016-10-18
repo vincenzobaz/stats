@@ -44,3 +44,6 @@ bin/
 #Deployment
 deployment/*.jar
 deployment/data/*
+
+# Sublime
+*.sublime*
