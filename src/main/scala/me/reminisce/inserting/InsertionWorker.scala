@@ -32,6 +32,7 @@ class InsertionWorker(database: DefaultDB) extends Actor with ActorLogging {
 
     future.onComplete {
       case Failure(e) => context.parent ! Abort
+        println(e)
       case Success(lastError) => {
         val toCompute = List(entity.player1, entity.player2)
         context.parent ! Inserted(toCompute)

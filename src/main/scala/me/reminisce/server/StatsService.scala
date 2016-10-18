@@ -111,8 +111,8 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
           case _ => (id, f, t)
         }
     }
-    val optFrom = if(!from.isEmpty) Some(from.head) else None
-    val optTo = if(!to.isEmpty) Some(to.head) else None
+    val optFrom = from.headOption
+    val optTo = to.headOption
     Some(RetrieveStats(userId, optFrom, optTo))
   }
 }
