@@ -21,10 +21,6 @@ class InsertionService(database: DefaultDB) extends Actor with ActorLogging {
       val worker = context.actorOf(InsertionWorker.props(database))
       worker ! msg
       context.become(waitingForMessages(sender))
-    case msg @ InsertStatistic(stats) =>
-      val worker = context.actorOf(InsertionWorker.props(database))
-      worker ! msg
-      context.become(waitingForMessages(sender))
     case Inserted(ids) => 
       ids.foreach{ id =>
         client ! InsertionDone()

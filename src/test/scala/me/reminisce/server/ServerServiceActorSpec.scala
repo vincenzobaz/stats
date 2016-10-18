@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import akka.testkit.TestActorRef
 import me.reminisce.database.DatabaseTester
-import me.reminisce.statistics.StatisticEntities._
 import org.json4s.JsonAST.{JObject, JString}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Formats, _}
@@ -17,7 +16,6 @@ import scala.language.postfixOps
 class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
 
   val testService = TestActorRef[ServerServiceActor]
-  val statsTest = StatResponse("userID123", FrequencyOfPlays())
   val randomID: String = java.util.UUID.randomUUID.toString
   val randomUser1: String = java.util.UUID.randomUUID.toString
   val randomUser2: String = java.util.UUID.randomUUID.toString
