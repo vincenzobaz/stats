@@ -1,49 +1,32 @@
 package me.reminisce.retrieving
 
 import akka.actor._
-import me.reminisce.computing.ComputationService
-import me.reminisce.model.ComputationMessages._
+import com.github.nscala_time.time.Imports._
 import me.reminisce.model.DatabaseCollection
 import me.reminisce.model.Messages._
-import reactivemongo.api.DefaultDB
-import com.github.nscala_time.time.Imports._
-import reactivemongo.bson.{BSONDocument, BSONDateTime}
-import reactivemongo.api.collections.bson._
+import me.reminisce.retrieving.RetrievingService._
 import me.reminisce.statistics.Stats._
-import scala.concurrent.Future
+import reactivemongo.api.DefaultDB
+import reactivemongo.api.collections.bson._
+import reactivemongo.bson.{BSONDateTime, BSONDocument}
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object RetrievingService {
-  def props(database: DefaultDB):Props =
+  def props(database: DefaultDB): Props =
     Props(new RetrievingService(database))
-}
 
-class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
-  import me.reminisce.model.RetrievingMessages._
-
-  def receive: Receive = waitingForMessages
- 
-  def waitingForMessages: Receive = {
-    case RetrieveStats(userId, from, to) =>
-      val client = sender
-      val future = getStatistics(userId, from, to)
-      future.onComplete{
-        case Success(stats) =>
-          if(stats.isEmpty){
-            client ! UserNotFound(s"Statistics not found for $userId")
-          } else {
-            client ! StatsRetrieved(stats)
-          }
-        case Failure(error) =>
-          sender !  Abort
-      }      
-    case o => log.info(s"[RS] Unexpected message ($o) received in waitingForMessages state")
+  def getStatistics(database: DefaultDB, userId: String, from: Option[DateTime], to: Option[DateTime]): Future[List[StatsEntities]] = {
+    val query = getQuery(userId, from, to)
+    val collectionStats = database[BSONCollection](DatabaseCollection.statsCollection)
+    collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List]()
   }
 
-  def getQuery(userId: String, from: Option[DateTime], to: Option[DateTime]) : BSONDocument =  {
+  def getQuery(userId: String, from: Option[DateTime], to: Option[DateTime]): BSONDocument = {
     (from, to) match {
-      case (Some(f), Some(t)) => 
+      case (Some(f), Some(t)) =>
         BSONDocument(
           "userId" -> userId,
           "date" -> BSONDocument(
@@ -56,8 +39,8 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
           "userId" -> userId,
           "date" -> BSONDocument(
             "$gte" -> BSONDateTime(f.getMillis)
+          )
         )
-      )    
       case (None, Some(t)) =>
         BSONDocument(
           "userId" -> userId,
@@ -71,10 +54,28 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
         )
     }
   }
+}
 
-  def getStatistics(userId: String, from: Option[DateTime], to: Option[DateTime]) : Future[List[StatsEntities]] = {
-    val query = getQuery(userId, from, to)
-    val collectionStats = database[BSONCollection](DatabaseCollection.statsCollection)
-    collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List]()
+class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
+
+  import me.reminisce.model.RetrievingMessages._
+
+  def receive: Receive = waitingForMessages
+
+  def waitingForMessages: Receive = {
+    case RetrieveStats(userId, from, to) =>
+      val client = sender
+      val future = getStatistics(database, userId, from, to)
+      future.onComplete {
+        case Success(stats) =>
+          if (stats.isEmpty) {
+            client ! UserNotFound(s"Statistics not found for $userId")
+          } else {
+            client ! StatsRetrieved(stats)
+          }
+        case Failure(error) =>
+          sender ! Abort
+      }
+    case o => log.info(s"[RS] Unexpected message ($o) received in waitingForMessages state")
   }
 }
