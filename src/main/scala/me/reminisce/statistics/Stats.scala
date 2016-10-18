@@ -23,9 +23,8 @@ object Stats {
   
   case class QuestionStats(
     amount: Int,
-    win: Int,
-    lost: Int,
-    tie: Int,
+    correct: Int,
+    wrong: Int,
     avoid: Int
     )
 

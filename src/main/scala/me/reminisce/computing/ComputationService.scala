@@ -127,7 +127,30 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
         case (r, Game(_, p1, p2, _, _, _, _, _, _, _, _, _, _, _)) =>
           if (p1 == userId) r + p2 else r + p1
       }
-      val questionsByType = emptyQuestionsByType()
+
+      val tiles = games.foldLeft[List[Tile]](List()){
+        case (t, Game(_, p1, p2, p1b, p2b, _, _, _, _, _, _, _, _, _)) =>
+          if(userId == p1) (t ++ p1b.tiles) else (t ++ p2b.tiles)
+      }
+      val groups = tiles.groupBy(t => QuestionKind.withName(t.`type`))
+      val questions = groups.map(t => (t._1, t._2.foldLeft[(Int, Int, Int, Int)]((0,0,0,0)){
+        case ((a, c, w, av), Tile(_,_,_,_,_, scr, answ, dis)) =>
+                  if(answ) {
+            (a+3, c + scr, w + (3-scr),  av)
+          } else if(!dis){
+              (a, c, w, av + 3)
+            } else {
+              (a, c, w, av)
+            }          
+      })).map{case (k, v) => (k, QuestionStats(v._1, v._2, v._3, v._4))}
+      val questionsByType = QuestionsByType(
+        questions.getOrElse(QuestionKind.MultipleChoice, QuestionStats(0,0,0,0)),
+        questions.getOrElse(QuestionKind.Timeline, QuestionStats(0,0,0,0)),
+        questions.getOrElse(QuestionKind.Geolocation, QuestionStats(0,0,0,0)),
+        questions.getOrElse(QuestionKind.Order, QuestionStats(0,0,0,0)),
+        questions.getOrElse(QuestionKind.Misc, QuestionStats(0,0,0,0))
+        )
+
       val id = BSONObjectID.generate
       val stats = StatsEntities(id, userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
       stats
@@ -137,132 +160,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       StatsEntities(BSONObjectID.generate, userId, DateTime.now, 0, 0, 0, 0, Set(), emptyQuestionsByType())
     }
     def emptyQuestionsByType(): QuestionsByType = {
-      val e = QuestionStats(0, 0, 0, 0, 0)
+      val e = QuestionStats(0, 0, 0, 0)
       QuestionsByType(e, e, e, e, e)
     }
-
-  // def waitingRequest: Receive = {
-    
-  //   case ComputeStatistics(userID) =>
-
-  //     val service = context.actorOf(RetrievingService.props(database))
-  //     service ! GetFirstPlayDate(userID)
-  //     context.become(waitingForRetrieving(sender, userID))
-  //   case o => 
-  //     log.info(s"Unexpected message $o received in waitingRequest state")
-  // }
-
-  // def waitingComputation(
-  //     client: ActorRef, userID: String,acc: FrequencyOfPlays, remaining: Int): Receive = {
-  //   val FrequencyOfPlays(d, w, m, y, a) = acc
-
-  //   {
-  //     case DailyStats(days) =>      
-  //       val newAcc = FrequencyOfPlays(days, w, m, y, a)
-  //       isComplete(userID, client, newAcc, remaining)
-  //     case WeeklyStats(weeks) =>
-  //       val newAcc = FrequencyOfPlays(d, weeks, m, y, a)
-  //       isComplete(userID, client, newAcc, remaining)
-  //     case MonthlyStats(months) =>
-  //       val newAcc = FrequencyOfPlays(d, w, months, y, a)
-  //       isComplete(userID, client, newAcc, remaining)
-  //     case YearlyStats(years) =>
-  //       val newAcc = FrequencyOfPlays(d, w, m, years, a)
-  //       isComplete(userID, client, newAcc, remaining)
-  //     case AllTimeStats(all) =>
-  //       val newAcc = FrequencyOfPlays(d, w, m, y, Some(all))
-  //       isComplete(userID, client, newAcc, remaining)
-  //     case o => 
-  //       log.info(s"Unexpected message $o received in waitingComputation state")
-  //   }
-  // }
-  // /*
-  //  * Wait for the data retrieving
-  //  */
-  // def waitingForRetrieving(client: ActorRef, userID: String): Receive = {
-  //   case FirstPlayDate(date) =>
-  //     sender ! PoisonPill
-  //     val timeline = howManyToCompute(userID, date)
-  //     splitRequestIntoManager(userID, timeline, true, client) 
-  //   case msg @ UserNotFound(message) =>
-  //     sender ! PoisonPill
-  //     client ! Abort
-  //   case o => 
-  //     log.info(s"Unexpected message $o received in waitingForretrieving state")
-
-  // }
-  // /*
-  //  * Collect all the statistics from the manager and send the StatResponse to the client
-  //  */
-  // def isComplete(userID: String, client: ActorRef, acc: FrequencyOfPlays, remaining: Int): Unit = {
-  //   val newRemaining = remaining -1
-  //   if (newRemaining == 0){
-  //     val stats = StatResponse(userID, acc)
-  //     client ! stats
-  //     insertStat(client, stats)
-  //   } else {
-  //     context.become(waitingComputation(client, userID, acc, newRemaining))
-  //   }
-  // }
-
-  // /*
-  //  * Wait for the new computed Statistics entity insertion 
-  //  */
-  // def waitingInsertion(client: ActorRef, service: ActorRef, tryAgain: Int, stat: StatResponse): Receive = {
-  //   case InsertionDone(message) => 
-  //     service ! PoisonPill
-  //     client ! Done
-  //   case InsertionAbort(message) => 
-  //     if(tryAgain != 0) {
-  //       service ! InsertStatistic(stat)
-  //       context.become(waitingInsertion(client, service, tryAgain - 1, stat))
-  //     } else {
-  //       client ! Abort
-  //       service ! PoisonPill
-  //     }
-  // }
-
-  // /*
-  //  * Instantiate a Insertion Service and start the insertion of the statistics entity
-  //  */
-  // def insertStat(client: ActorRef, stat: StatResponse){
-  //   val service = context.actorOf(InsertionService.props(database))
-  //   service ! InsertStatistic(stat)
-  //   context.become(waitingInsertion(client, service, 5, stat))    
-  // }
-
-  // /*
-  //  * Dispatch the computation request to managers
-  //  */
-  // private def splitRequestIntoManager(userID: String, timeline: Timeline, allTime:Boolean, client: ActorRef) = {
-  //   val daysManager = (IntervalKind.daily, context.actorOf(ComputationManager.props(database, IntervalKind.daily)))
-  //   val weeksManager = (IntervalKind.weekly, context.actorOf(ComputationManager.props(database, IntervalKind.weekly)))
-  //   val monthsManager = (IntervalKind.monthly, context.actorOf(ComputationManager.props(database, IntervalKind.monthly)))
-  //   val yearsManager = (IntervalKind.yearly, context.actorOf(ComputationManager.props(database, IntervalKind.yearly)))
-        
-  //   val managersMaps: Map[IntervalKind, ActorRef] = 
-  //     if(allTime) {
-  //       val allTimeManager = (IntervalKind.allTime, context.actorOf(ComputationManager.props(database, IntervalKind.allTime)))
-  //       Map(daysManager, weeksManager, monthsManager, yearsManager, allTimeManager)
-  //     } else 
-  //       Map(daysManager, weeksManager, monthsManager, yearsManager)
-
-  //   managersMaps.foreach { 
-  //     case (manager, ref) => ref ! ComputeStatsWithTimeline(userID, timeline, allTime)
-  //   }
-  //   context.become(waitingComputation(client, userID, FrequencyOfPlays(), managersMaps.size))   
-  // }
-
-  // /*
-  //  * Compute the number of day, week, month and year since the first play of the user
-  //  */
-  // private def howManyToCompute(userID: String, firstPlay: DateTime): Timeline = {
-  //   val today = DateTime.now
-  //   val days = Days.daysBetween(firstPlay, today).getDays
-  //   val weeks = Weeks.weeksBetween(firstPlay, today).getWeeks
-  //   val months = Months.monthsBetween(firstPlay, today).getMonths
-  //   val years = Years.yearsBetween(firstPlay, today).getYears
-  //   val timeline = Timeline(userID, days, weeks, months, years)
-  //   timeline
-  // }
 }
