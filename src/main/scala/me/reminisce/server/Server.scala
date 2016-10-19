@@ -23,10 +23,12 @@ object Server extends App {
   implicit val context = ExecutionContext.Implicits.global
 
   val protocol = "http://"
-  val hostName = ApplicationConfiguration.hostName
   val port = ApplicationConfiguration.serverPort
+  val hostName = ApplicationConfiguration.hostName
+  val mongoHost = ApplicationConfiguration.mongoHost
+  val mongoDbName = ApplicationConfiguration.mongodbName
   // create and start our service actor
-  val service = system.actorOf(Props[ServerServiceActor], "server-service")
+  val service = system.actorOf(Props(new StatsServerActor(mongoHost, mongoDbName)), "server-service")
   println("ServerServiceActor created")
 
   // sets the default timezone to UTC
