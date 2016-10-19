@@ -3,19 +3,26 @@ package me.reminisce.server
 import java.util.concurrent.TimeUnit
 
 import akka.testkit.TestActorRef
-import me.reminisce.database.DatabaseTester
+import me.reminisce.database.{DatabaseTestHelper, DatabaseTester}
 import org.json4s.JsonAST.{JObject, JString}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Formats, _}
+import reactivemongo.api.MongoDriver
 import spray.http.ContentTypes._
 import spray.http._
 
 import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
+import scala.util.Random
 
-class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
+class StatsServerActorSpec extends DatabaseTester("StatsServerActorSpec") {
 
-  val testService = TestActorRef[ServerServiceActor]
+  val port = DatabaseTestHelper.port
+  val dbId = Random.nextInt
+  val mongoHost = s"localhost:$port"
+  val dbName = s"DB${dbId}_for_StatsServerActorSpec"
+  val testService = TestActorRef(new StatsServerActor(mongoHost, dbName))
   val randomID: String = java.util.UUID.randomUUID.toString
   val randomUser1: String = java.util.UUID.randomUUID.toString
   val randomUser2: String = java.util.UUID.randomUUID.toString
@@ -25,12 +32,22 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
 
   case class SimpleMessageFormat(message: String)
 
+  override def afterAll(): Unit = {
+    val driver = new MongoDriver
+    val connection = driver.connection(List(mongoHost))
+    whenReady(connection.database(dbName)) {
+      db =>
+        db.drop()
+    }
+    super.afterAll()
+  }
+
   "ServerServiceActor" must {
 
     "try to insert a Game." in {
 
       val gameJson: String = JsonEntity.game(randomID, randomUser1, randomUser2)
-      val postRequest = new HttpRequest(
+      val postRequest = HttpRequest(
         method = HttpMethods.POST,
         uri = urlInsert,
         entity = HttpEntity(`application/json`, gameJson)
@@ -59,7 +76,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
     }
 
     "try to retrieve Stats for an unknown user." in {
-      val getRequest = new HttpRequest(uri = s"/stats?userId=NOT${randomUser1}")
+      val getRequest = HttpRequest(uri = s"/stats?userId=NOT$randomUser1")
       assert(getRequest.method == HttpMethods.GET)
       testService ! getRequest
       val responseOpt = Option(receiveOne(Duration(10, TimeUnit.SECONDS)))
@@ -71,7 +88,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
           json match {
             case JObject(List((k, msg))) =>
               assert(k == "message")
-              assert(msg == JString(s"Statistics not found for NOT${randomUser1}"))
+              assert(msg == JString(s"Statistics not found for NOT$randomUser1"))
             case _ => fail("Response is not defined.")
           }
         case None =>
@@ -80,7 +97,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
     }
 
     "try to retrieve Stats for an existing user." in {
-      val getRequest = new HttpRequest(uri = s"/stats?userId=${randomUser1}")
+      val getRequest = HttpRequest(uri = s"/stats?userId=$randomUser1")
       assert(getRequest.method == HttpMethods.GET)
       testService ! getRequest
       val responseOpt = Option(receiveOne(Duration(10, TimeUnit.SECONDS)))
@@ -104,7 +121,7 @@ class ServerServiceActorSpec extends DatabaseTester("ServerServiceActorSpec") {
     "try to insert a duplicate game" in {
       val gameJson: String = JsonEntity.game(randomID, randomUser1, randomUser2)
 
-      val postRequest = new HttpRequest(
+      val postRequest = HttpRequest(
         method = HttpMethods.POST,
         uri = urlInsert,
         entity = HttpEntity(`application/json`, gameJson)

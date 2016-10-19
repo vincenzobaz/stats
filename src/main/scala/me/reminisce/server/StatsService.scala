@@ -1,12 +1,9 @@
 package me.reminisce.server
 
 import akka.actor._
-
 import spray.routing._
 import spray.httpx.Json4sSupport
-
-import reactivemongo.api.DefaultDB
-
+import reactivemongo.api.{DefaultDB, MongoConnection}
 import me.reminisce.server.GameEntities._
 import me.reminisce.server.jsonserializer.StatsFormatter
 import me.reminisce.server.domain.{RESTHandlerCreator, RestMessage}
@@ -15,6 +12,10 @@ import me.reminisce.model.RetrievingMessages._
 import me.reminisce.inserting.InsertionService
 import me.reminisce.retrieving.RetrievingService
 import com.github.nscala_time.time.Imports._
+import spray.http.StatusCodes._
+
+import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object StatsService
 
@@ -35,7 +36,8 @@ object GameFormat extends Json4sSupport with StatsFormatter{}
 trait StatsService extends HttpService with RESTHandlerCreator with Actor with ActorLogging {
   def actorRefFactory: ActorContext
 
-  val db: DefaultDB
+  val dbName: String
+  val dbConnection: MongoConnection
  
   val statsRoutes = {
     
@@ -74,15 +76,31 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
         }
       }   
     }
+
+  private def handleWithDb(handler: (DefaultDB, RequestContext) => Unit): Route = {
+    ctx =>
+      dbConnection.database(dbName).onComplete {
+        case Success(db) =>
+          handler(db, ctx)
+        case Failure(e) =>
+          complete(InternalServerError, s"${e.getMessage}")
+      }
+  }
     
   private def insertDB(message: RestMessage) : Route = {
-    val insertionService = context.actorOf(InsertionService.props(db))
-    ctx => perRequest(ctx, insertionService, message)
+    handleWithDb {
+      (db, ctx) =>
+        val insertionService = context.actorOf(InsertionService.props(db))
+        perRequest(ctx, insertionService, message)
+    }
   }
   
   private def retrieveStats(message: RestMessage) : Route = {
-    val retrievingService = context.actorOf(RetrievingService.props(db))
-    ctx => perRequest(ctx, retrievingService, message)
+    handleWithDb {
+      (db, ctx) =>
+        val retrievingService = context.actorOf(RetrievingService.props(db))
+        perRequest(ctx, retrievingService, message)
+    }
   }
 
   def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {

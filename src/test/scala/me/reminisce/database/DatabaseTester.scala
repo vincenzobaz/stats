@@ -1,39 +1,44 @@
 package me.reminisce.database
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, WordSpecLike}
-import reactivemongo.api.DefaultDB
-import reactivemongo.bson.BSONInteger
-import reactivemongo.core.commands.GetLastError
+import reactivemongo.api.{DefaultDB, FailoverStrategy}
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Random
 
 abstract class DatabaseTester(actorSystemName: String) extends TestKit(ActorSystem(actorSystemName, ConfigFactory.parseString("akka.loglevel = ERROR")))
-with ImplicitSender
-with WordSpecLike with BeforeAndAfterAll with BeforeAndAfterEach {
+  with ImplicitSender with ScalaFutures
+  with WordSpecLike with BeforeAndAfterAll with BeforeAndAfterEach {
 
-  val safeLastError = new GetLastError(w = Some(BSONInteger(1)))
-  val dbs = mutable.Set[DefaultDB]()
+  implicit override val patienceConfig = PatienceConfig(timeout = Span(10, Seconds), interval = Span(50, Millis))
+
+  val failoverStrategy = FailoverStrategy(initialDelay = FiniteDuration(200, TimeUnit.MILLISECONDS), retries = 10)
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
-    dbs.foreach(_.drop())
   }
 
   override def afterEach(): Unit = {
     Thread.sleep(100)
   }
 
-
-  protected def newDb(): DefaultDB = {
+  protected def testWithDb(test: DefaultDB => Unit): Unit = {
     val dbId = Random.nextInt // if the actorSystemName is shared for unknown reasons.
     val connection = DatabaseTestHelper.getConnection
-    val db = connection(s"DB${dbId}_for$actorSystemName")
-    dbs += db
-    db
+    val dbName = s"DB${dbId}_for_$actorSystemName"
+
+    whenReady(connection.database(dbName, failoverStrategy = failoverStrategy)) {
+      db =>
+        DatabaseTestHelper.registerDb(db)
+        test(db)
+    }
   }
 }

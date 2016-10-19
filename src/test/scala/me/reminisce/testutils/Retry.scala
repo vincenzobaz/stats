@@ -9,6 +9,10 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
+/**
+  * Contains methods to retrieve entities from a mongo collection. They will retry until something is found which matches
+  * the check. If the check trivially returns true, it still ensures that something was found.
+  */
 object Retry {
   private val attemptsPermitted = 20
 
@@ -41,7 +45,7 @@ object Retry {
 
   def findList[T](collection: BSONCollection, selector: BSONDocument, attempts: Int)
                  (check: List[T] => Boolean)(implicit reader: BSONDocumentReader[T]): List[T] = {
-    Await.result(collection.find(selector).cursor[T].collect[List](stopOnError = true),
+    Await.result(collection.find(selector).cursor[T]().collect[List](stopOnError = true),
       Duration(10, TimeUnit.SECONDS)) match {
       case List() =>
         attempt[List[T]](attempts, Nil) {
