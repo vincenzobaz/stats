@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 object RetrievingMessages {
 
-  case class RetrieveStats(userID: String, from :Option[DateTime], to: Option[DateTime])
+  case class RetrieveStats(userID: String, from :Option[DateTime], to: Option[DateTime], limit: Option[Int])
   extends RestMessage
 
   case class UserNotFound(message: String) extends RestMessage

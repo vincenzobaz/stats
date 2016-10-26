@@ -23,8 +23,8 @@ object Stats {
   
   case class QuestionStats(
     amount: Int,
-    correct: Int,
-    wrong: Int,
+    correct: Double,
+    wrong: Double,
     avoid: Int
     )
 
@@ -32,8 +32,7 @@ object Stats {
     multipleChoice: QuestionStats,
     timeline: QuestionStats,
     geolocation: QuestionStats,
-    order: QuestionStats,
-    misc: QuestionStats
+    order: QuestionStats
     )
 
   implicit val questionStatsHandler: BSONHandler[BSONDocument, QuestionStats] = Macros.handler[QuestionStats]  

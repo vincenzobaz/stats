@@ -88,31 +88,35 @@ trait StatsService extends HttpService with RESTHandlerCreator with Actor with A
   def parseParameters(params: Seq[(String, String)]) : Option[RetrieveStats] = {
     lazy val formatter = DateTimeFormat.forPattern("dd-MM-yyyy")
 
-    val (userId, from, to) = params.foldLeft(("", List[DateTime](), List[DateTime]())){
-      case ((id, f, t), (key, value)) =>
+    val (userId, from, to, limit) = params.foldLeft(("", List[DateTime](), List[DateTime](), 0)){
+      case ((id, f, t, l), (key, value)) =>
         key match {
-          case "userId" if id.isEmpty => (id+value, f, t)
+          case "userId" if id.isEmpty => (id+value, f, t, l)
           case "from" => 
             try{
               val date = DateTime.parse(value, formatter)
-              (id, f :+ date, t)
+              (id, f :+ date, t, l)
             }
             catch{
-              case e : Throwable => (id, f, t)
+              case e : Throwable => (id, f, t, l)
             }
           case "to" => 
             try{
               val date = DateTime.parse(value, formatter)
-              (id, f, t :+ date)
+              (id, f, t :+ date, l)
             }
             catch{
-              case e : Throwable => (id, f, t)
+              case e : Throwable => (id, f, t, l)
             }
-          case _ => (id, f, t)
+          case "limit" =>
+            (id, f, t, value.toInt)
+          case _ => (id, f, t, l)
         }
     }
     val optFrom = if(!from.isEmpty) Some(from.head) else None
     val optTo = if(!to.isEmpty) Some(to.head) else None
-    Some(RetrieveStats(userId, optFrom, optTo))
+    val optLimit = if(limit != 0) Some(limit) else None
+    println(s"$optFrom $optTo $optLimit")
+    Some(RetrieveStats(userId, optFrom, optTo, optLimit))
   }
 }

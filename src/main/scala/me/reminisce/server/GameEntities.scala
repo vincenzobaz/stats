@@ -24,17 +24,15 @@ object GameEntities {
     player2AvailableMoves: List[Move],
     wonBy: Int,
     creationTime: Long
-    ) {
-    override def toString(): String = s"GAME: players: $player1($player1Scores) vs $player2($player2Scores) : winner: $wonBy"
-  }
+    )
 
   case class Board(userId: String, tiles: List[Tile], _id: String) extends RestMessage  
 
   case class Tile(`type`: String,
     _id: String,
-    question1: Option[GameQuestion],
-    question2: Option[GameQuestion],
-    question3: Option[GameQuestion],
+    question1: GameQuestion,
+    question2: GameQuestion,
+    question3: GameQuestion,
     score: Int,
     answered: Boolean,
     disabled: Boolean) extends RestMessage
@@ -102,9 +100,9 @@ object GameEntities {
   * @param kind   kind of question (See [[me.reminisce.server.GameEntities.QuestionKind]]
   * @param `type` type of question
   */
-  abstract sealed class GameQuestion(kind: QuestionKind, `type`: String)
+  abstract sealed class GameQuestion(val kind: QuestionKind, `type`: String)
 
-  case class MultipleChoiceQuestion(kind: QuestionKind = QuestionKind.MultipleChoice,
+  case class MultipleChoiceQuestion(override val kind: QuestionKind = QuestionKind.MultipleChoice,
     `type`: String,
     subject: Option[Subject],
     choices: List[Possibility],
@@ -118,10 +116,10 @@ object GameEntities {
     step: Int,
     threshold: Int,
     answer: String,
-    kind: QuestionKind = QuestionKind.Timeline,
+    override val kind: QuestionKind = QuestionKind.Timeline,
     `type`: String) extends GameQuestion(kind, `type`)
 
-  case class OrderQuestion(kind: QuestionKind = QuestionKind.Order,
+  case class OrderQuestion(override val kind: QuestionKind = QuestionKind.Order,
    `type`: String,
     choices: List[SubjectWithId],
     items: List[Item],
@@ -139,7 +137,7 @@ object GameEntities {
     defaultLocation: Location,
     answer: Location,
     `type`: String,
-    kind: QuestionKind = QuestionKind.Geolocation
+    override val kind: QuestionKind = QuestionKind.Geolocation
   ) extends GameQuestion(kind, `type`)
 
   case class Location(latitude: Double, longitude: Double)

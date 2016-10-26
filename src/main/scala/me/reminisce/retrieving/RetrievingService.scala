@@ -25,9 +25,9 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
   def receive: Receive = waitingForMessages
  
   def waitingForMessages: Receive = {
-    case RetrieveStats(userId, from, to) =>
+    case RetrieveStats(userId, from, to, limit) =>
       val client = sender
-      val future = getStatistics(userId, from, to)
+      val future = getStatistics(userId, from, to, limit)
       future.onComplete{
         case Success(stats) =>
           if(stats.isEmpty){
@@ -72,9 +72,16 @@ class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
     }
   }
 
-  def getStatistics(userId: String, from: Option[DateTime], to: Option[DateTime]) : Future[List[StatsEntities]] = {
+  def getStatistics(userId: String, from: Option[DateTime], to: Option[DateTime], limit: Option[Int]) : Future[List[StatsEntities]] = {
     val query = getQuery(userId, from, to)
+    println(query)
     val collectionStats = database[BSONCollection](DatabaseCollection.statsCollection)
-    collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List]()
+    limit match {
+      case Some(max) =>
+        collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List](max)  
+      case None =>
+        collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List]()
+
+    }
   }
 }

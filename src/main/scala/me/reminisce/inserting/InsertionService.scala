@@ -18,6 +18,7 @@ class InsertionService(database: DefaultDB) extends Actor with ActorLogging {
 
   def waitingForMessages(client: ActorRef): Receive = {
     case msg @ InsertEntity(game) => 
+      println(game)
       val worker = context.actorOf(InsertionWorker.props(database))
       worker ! msg
       context.become(waitingForMessages(sender))
