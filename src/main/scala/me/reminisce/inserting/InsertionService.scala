@@ -5,6 +5,7 @@ import reactivemongo.api.DefaultDB
 import me.reminisce.computing.ComputationService
 import me.reminisce.model.ComputationMessages._
 import me.reminisce.model.Messages._
+import me.reminisce.model.InsertionMessages._
 
 object InsertionService {
   def props(database: DefaultDB):Props =
@@ -12,13 +13,12 @@ object InsertionService {
 }
 
 class InsertionService(database: DefaultDB) extends Actor with ActorLogging {
-  import me.reminisce.model.InsertionMessages._
 
   def receive: Receive = waitingForMessages(null)
 
   def waitingForMessages(client: ActorRef): Receive = {
     case msg @ InsertEntity(game) => 
-      println(game)
+      log.info(s"Received game: $game")
       val worker = context.actorOf(InsertionWorker.props(database))
       worker ! msg
       context.become(waitingForMessages(sender))
