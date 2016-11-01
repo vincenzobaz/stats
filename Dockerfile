@@ -12,6 +12,8 @@ COPY . stats/
 RUN cd stats && sbt update && sbt assembly
 RUN cp stats/target/scala-2.11/stats.jar .
 RUN chown -R stats_user:stats_group .
+RUN rm -rf stats/
+EXPOSE 7777
 USER stats_user
 
 CMD java -Xmx128m -jar stats.jar

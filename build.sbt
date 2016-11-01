@@ -2,7 +2,7 @@ name := "stats"
 
 version := "1.0"
 
-scalaVersion  := "2.11.6"
+scalaVersion  := "2.11.8"
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
