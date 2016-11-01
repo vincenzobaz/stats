@@ -60,7 +60,10 @@ resolvers ++= Seq("logback-core on Maven" at "https://mvnrepository.com/artifact
 resolvers ++= Seq("logback-classic on Maven" at "https://mvnrepository.com/artifact/ch.qos.logback/logback-classic")
 resolvers ++= Seq("Logback logstash interface" at "https://mvnrepository.com/artifact/net.logstash.logback/logstash-logback-encoder")
 
+assemblyJarName in assembly := "stats.jar"
 
 coverageHighlighting := false
 parallelExecution in Test := false
 Revolver.settings
+
+test in assembly := {}
