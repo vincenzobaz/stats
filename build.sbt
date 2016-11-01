@@ -64,3 +64,5 @@ resolvers ++= Seq("Logback logstash interface" at "https://mvnrepository.com/art
 coverageHighlighting := false
 parallelExecution in Test := false
 Revolver.settings
+
+test in assembly := {}
