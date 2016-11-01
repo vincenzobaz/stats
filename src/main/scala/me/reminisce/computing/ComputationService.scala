@@ -110,7 +110,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
 
     def aggregate(games: List[Game], userId: String) : StatsEntities = {
       val (win, lost, tie, amount): (Int, Int, Int, Int) = games.foldLeft[(Int, Int, Int, Int)]((0, 0, 0, 0)){
-        case ((w, l, t, a), Game(_, p1, p2, _, _, _, _, p1s, p2s, _, _, _, _, _)) =>        
+        case ((w, l, t, a), Game(_, p1, p2, _, _, _, p1s, p2s, _, _)) =>        
           val (score, rival) = if (p1 == userId) (p1s, p2s) else (p2s, p1s)         
             if(score > rival) {
               (w + 1, l, t, a + 1)
@@ -123,7 +123,7 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
             }
       }
       val rivals: Set[String] = games.foldLeft[Set[String]]((Set())){
-        case (r, Game(_, p1, p2, _, _, _, _, _, _, _, _, _, _, _)) =>
+        case (r, Game(_, p1, p2, _, _, _, _, _, _, _)) =>
           if (p1 == userId) r + p2 else r + p1
       }
 
@@ -139,9 +139,10 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       //       (t ++ List(tile.question1, tile.question2, tile.question3)
       //     } 
       // }
+      
 
       val allQuestionsPairedWithScore: List[(Boolean, Double, GameQuestion)] = games.foldLeft[List[(Boolean, Double, GameQuestion)]](List[(Boolean, Double, GameQuestion)]()){
-        case (t, Game(_, p1, p2, p1b, p2b, _, _, _, _, _, _, _, _, _)) =>
+        case (t, Game(_, p1, p2, p1b, p2b, _, _, _, _, _)) =>
 
           if(userId == p1) {
             val tiles = p1b.tiles
