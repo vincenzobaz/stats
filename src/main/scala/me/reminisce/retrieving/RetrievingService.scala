@@ -4,6 +4,7 @@ import akka.actor._
 import com.github.nscala_time.time.Imports._
 import me.reminisce.model.DatabaseCollection
 import me.reminisce.model.Messages._
+import me.reminisce.model.RetrievingMessages._
 import me.reminisce.retrieving.RetrievingService._
 import me.reminisce.statistics.Stats._
 import reactivemongo.api.DefaultDB
@@ -18,10 +19,15 @@ object RetrievingService {
   def props(database: DefaultDB): Props =
     Props(new RetrievingService(database))
 
-  def getStatistics(database: DefaultDB, userId: String, from: Option[DateTime], to: Option[DateTime]): Future[List[StatsEntities]] = {
+  def getStatistics(database: DefaultDB, userId: String, from: Option[DateTime], to: Option[DateTime], limit: Option[Int]): Future[List[StatsEntities]] = {
     val query = getQuery(userId, from, to)
     val collectionStats = database[BSONCollection](DatabaseCollection.statsCollection)
-    collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List]()
+    limit match {
+      case Some(max) =>
+        collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List](max)
+      case None =>
+        collectionStats.find(query).sort(BSONDocument("date" -> -1)).cursor[StatsEntities]().collect[List]()
+    }
   }
 
   def getQuery(userId: String, from: Option[DateTime], to: Option[DateTime]): BSONDocument = {
@@ -58,14 +64,12 @@ object RetrievingService {
 
 class RetrievingService(database: DefaultDB) extends Actor with ActorLogging {
 
-  import me.reminisce.model.RetrievingMessages._
-
   def receive: Receive = waitingForMessages
 
   def waitingForMessages: Receive = {
-    case RetrieveStats(userId, from, to) =>
+    case RetrieveStats(userId, from, to, limit) =>
       val client = sender
-      val future = getStatistics(database, userId, from, to)
+      val future = getStatistics(database, userId, from, to, limit)
       future.onComplete {
         case Success(stats) =>
           if (stats.isEmpty) {

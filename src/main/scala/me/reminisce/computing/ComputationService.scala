@@ -21,9 +21,9 @@ import scala.concurrent.Future
 import com.github.nscala_time.time.Imports._
 
 object ComputationService {
-  def props(database: DefaultDB): Props =
+  def props(database: DefaultDB): Props = 
     Props(new ComputationService(database))
-  }
+}
 
 class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
   import me.reminisce.model.InsertionMessages._
@@ -67,8 +67,8 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       val queryStats = BSONDocument(
           "userId" -> userId
         )
-      val s : Future[List[StatsEntities]] = collectionStats.find(queryStats).cursor[StatsEntities]().collect[List]()
-      s.onComplete {
+      val futureOnStats : Future[List[StatsEntities]] = collectionStats.find(queryStats).cursor[StatsEntities]().collect[List]()
+      futureOnStats.onComplete {
         case Success(existingStats) =>
           val todayStats = existingStats.filter(x => x.date > midnightToday)
           if(todayStats.isEmpty) {
@@ -109,10 +109,9 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
     }
 
     def aggregate(games: List[Game], userId: String) : StatsEntities = {
-      
       val (win, lost, tie, amount): (Int, Int, Int, Int) = games.foldLeft[(Int, Int, Int, Int)]((0, 0, 0, 0)){
-        case ((w, l, t, a), Game(_, p1, p2, _, _, _, _, p1s, p2s, _, _, _, _, _)) =>        
-          val (score, rival) = if (p1 == userId) (p1s, p2s) else (p2s, p1s)         
+        case ((w, l, t, a), Game(_, player1, _, _, _, _, player1Score, player2Score, _, _)) =>        
+          val (score, rival) = if (player1 == userId) (player1Score, player2Score) else (player2Score, player1Score)         
             if(score > rival) {
               (w + 1, l, t, a + 1)
             } else {
@@ -124,43 +123,65 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
             }
       }
       val rivals: Set[String] = games.foldLeft[Set[String]]((Set())){
-        case (r, Game(_, p1, p2, _, _, _, _, _, _, _, _, _, _, _)) =>
-          if (p1 == userId) r + p2 else r + p1
+        case (rivalsList, Game(_, player1, player2, _, _, _, _, _, _, _)) =>
+          if (player1 == userId) rivalsList + player2 else rivalsList + player1
       }
 
-      val tiles = games.foldLeft[List[Tile]](List()){
-        case (t, Game(_, p1, p2, p1b, p2b, _, _, _, _, _, _, _, _, _)) =>
-          if(userId == p1) (t ++ p1b.tiles) else (t ++ p2b.tiles)
+      val allQuestionsPairedWithScore: List[(Boolean, Double, GameQuestion)] = games.foldLeft[List[(Boolean, Double, GameQuestion)]](List[(Boolean, Double, GameQuestion)]()){
+        case (t, Game(_, player1, _, player1Board, player2Board, _, _, _, _, _)) =>
+
+          if(userId == player1) {
+            val tiles = player1Board.tiles
+           
+            val questionsList = tiles.foldLeft[List[(Boolean, Double, GameQuestion)]](List()){
+              case (l, Tile(_, _, q1, q2, q3, scoreTile, answered, disable)) =>
+                if(!(disable & !answered)){
+                  val questions = List(q1, q2, q3)
+                  val score: Double = scoreTile / 3
+                  questions.map(x => (answered, score, x))
+                } else {
+                  (l)
+                }
+              }
+            (t ++ questionsList)
+          }
+          else {
+            val tiles = player2Board.tiles
+            val questionsList = tiles.foldLeft[List[(Boolean, Double, GameQuestion)]](List()){
+              case (l, Tile(_, _, q1, q2, q3, scoreTile, answered, disable)) =>
+                if(!(disable & !answered)){
+                  val questions = List(q1, q2, q3)
+                  val score: Double = scoreTile / 3
+                  questions.map(x => (answered, score, x))
+                } else {
+                  (l)
+                }
+              }            
+            (t ++ questionsList)
+          } 
       }
-      val groups = tiles.groupBy(t => QuestionKind.withName(t.`type`))
-      val questions = groups.map(t => (t._1, t._2.foldLeft[(Int, Int, Int, Int)]((0,0,0,0)){
-        case ((a, c, w, av), Tile(_,_,_,_,_, scr, answ, dis)) =>
-                  if(answ) {
-            (a+3, c + scr, w + (3-scr),  av)
-          } else if(!dis){
-              (a, c, w, av + 3)
-            } else {
-              (a, c, w, av)
-            }          
-      })).map{case (k, v) => (k, QuestionStats(v._1, v._2, v._3, v._4))}
+
+      val questionsGroupedByKind: Map[QuestionKind, List[(Boolean, Double, GameQuestion)]] = allQuestionsPairedWithScore.groupBy{case (a, s, q) => q.kind}
+
+      val scoringForEachKind = questionsGroupedByKind.map(kind => (kind._1, kind._2.foldLeft[(Int, Double, Double, Int)]((0,0,0,0)){
+        case ((a, c, w, av), (answer, score, question))   =>
+          if(answer) {
+            (a+1, c + score, w + (1-score),  av)
+          } else {
+            (a, c, w, av + 1)
+          } 
+        }          
+      )).map{case (k, (amount: Int, correct: Double, wrong: Double, avoid: Int)) => (k, QuestionStats(amount, correct, wrong, avoid))}
+
       val questionsByType = QuestionsByType(
-        questions.getOrElse(QuestionKind.MultipleChoice, QuestionStats(0,0,0,0)),
-        questions.getOrElse(QuestionKind.Timeline, QuestionStats(0,0,0,0)),
-        questions.getOrElse(QuestionKind.Geolocation, QuestionStats(0,0,0,0)),
-        questions.getOrElse(QuestionKind.Order, QuestionStats(0,0,0,0)),
-        questions.getOrElse(QuestionKind.Misc, QuestionStats(0,0,0,0))
+        scoringForEachKind.getOrElse(QuestionKind.MultipleChoice, QuestionStats(0,0,0,0)),
+        scoringForEachKind.getOrElse(QuestionKind.Timeline, QuestionStats(0,0,0,0)),
+        scoringForEachKind.getOrElse(QuestionKind.Geolocation, QuestionStats(0,0,0,0)),
+        scoringForEachKind.getOrElse(QuestionKind.Order, QuestionStats(0,0,0,0))
         )
 
       val id = BSONObjectID.generate
       val stats = StatsEntities(id, userId, DateTime.now, amount, win, lost, tie, rivals, questionsByType)
       stats
-    }
-
-    def emptyStats(userId: String): StatsEntities = {
-      StatsEntities(BSONObjectID.generate, userId, DateTime.now, 0, 0, 0, 0, Set(), emptyQuestionsByType())
-    }
-    def emptyQuestionsByType(): QuestionsByType = {
-      val e = QuestionStats(0, 0, 0, 0)
-      QuestionsByType(e, e, e, e, e)
     }
 }
