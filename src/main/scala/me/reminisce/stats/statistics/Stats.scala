@@ -17,7 +17,7 @@ object Stats {
     win: Int,
     lost: Int,  
     tie: Int,  
-    rivals: Set[String],
+    rivals: Set[Rival],
     questionsByType: QuestionsByType
     )
   
@@ -26,6 +26,11 @@ object Stats {
     correct: Double,
     wrong: Double,
     avoid: Int
+    )
+
+  case class Rival(
+    rivalId: String,
+    number: Int
     )
 
   case class QuestionsByType(
@@ -37,7 +42,9 @@ object Stats {
 
   implicit val questionStatsHandler: BSONHandler[BSONDocument, QuestionStats] = Macros.handler[QuestionStats]  
   implicit val questionsByTypeHandler: BSONHandler[BSONDocument, QuestionsByType] = Macros.handler[QuestionsByType]  
+  implicit val rivalHandler: BSONHandler[BSONDocument, Rival] = Macros.handler[Rival]  
    
+
   implicit object StatsReader extends BSONDocumentReader[StatsEntities]{
     def read(doc: BSONDocument): StatsEntities = {
       val id = doc.getAs[BSONObjectID]("_id").get
@@ -47,7 +54,7 @@ object Stats {
       val win = doc.getAs[Int]("win").get
       val lost = doc.getAs[Int]("lost").get
       val tie = doc.getAs[Int]("tie").get
-      val rivals = doc.getAs[Set[String]]("rivals").get
+      val rivals = doc.getAs[Set[Rival]]("rivals").get
       val questionsByType = doc.getAs[QuestionsByType]("questionsByType").get
       StatsEntities(id, userId, date, amount, win, lost, tie, rivals, questionsByType)
     }

@@ -112,51 +112,55 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
       val (win, lost, tie, amount): (Int, Int, Int, Int) = games.foldLeft[(Int, Int, Int, Int)]((0, 0, 0, 0)){
         case ((w, l, t, a), Game(_, player1, _, _, _, _, player1Score, player2Score, _, _)) =>        
           val (score, rival) = if (player1 == userId) (player1Score, player2Score) else (player2Score, player1Score)         
-            if(score > rival) {
-              (w + 1, l, t, a + 1)
+          if(score > rival) {
+            (w + 1, l, t, a + 1)
+          } else {
+            if(score < rival){
+              (w, l + 1, t, a + 1)
             } else {
-              if(score < rival){
-                (w, l + 1, t, a + 1)
-              } else {
-                (w, l, t + 1, a + 1)
-              }
+              (w, l, t + 1, a + 1)
             }
+          }
       }
-      val rivals: Set[String] = games.foldLeft[Set[String]]((Set())){
-        case (rivalsList, Game(_, player1, player2, _, _, _, _, _, _, _)) =>
-          if (player1 == userId) rivalsList + player2 else rivalsList + player1
+      val rivalsList: List[String] = games.foldLeft[List[String]]((List())){
+        case (rList, Game(_, player1, player2, _, _, _, _, _, _, _)) =>
+          if (player1 == userId) player2 :: rList else player1:: rList
       }
+      val rivals = rivalsList.groupBy(s => s).map(s => Rival(s._1, s._2.length)).toSet
 
       val allQuestionsPairedWithScore: List[(Boolean, Double, GameQuestion)] = games.foldLeft[List[(Boolean, Double, GameQuestion)]](List[(Boolean, Double, GameQuestion)]()){
         case (t, Game(_, player1, _, player1Board, player2Board, _, _, _, _, _)) =>
 
-          if(userId == player1) {
-            val tiles = player1Board.tiles
-           
-            val questionsList = tiles.foldLeft[List[(Boolean, Double, GameQuestion)]](List()){
+          val pairQuestionWithScore = (tiles: List[Tile]) => {
+
+            tiles.foldLeft[List[(Boolean, Double, GameQuestion)]](List()){
               case (l, Tile(_, _, q1, q2, q3, scoreTile, answered, disable)) =>
                 if(!(disable & !answered)){
                   val questions = List(q1, q2, q3)
-                  val score: Double = scoreTile / 3
-                  questions.map(x => (answered, score, x))
+                  val score: Double = scoreTile / 3.0
+                  l ++ questions.map{ x => 
+                    x.correct match {
+                      case Some(isCorrect) => 
+                        if (isCorrect){
+                          (answered, 1.0, x)
+                        }else { 
+                          (answered, 0.0, x)
+                        }
+                      case None => (false, 0.0, x)
+                    }
+                  }
                 } else {
-                  (l)
+                  l
                 }
               }
+          }
+
+          if(userId == player1) {
+            val questionsList : List[(Boolean, Double, GameQuestion)] = pairQuestionWithScore(player1Board.tiles)
             (t ++ questionsList)
           }
           else {
-            val tiles = player2Board.tiles
-            val questionsList = tiles.foldLeft[List[(Boolean, Double, GameQuestion)]](List()){
-              case (l, Tile(_, _, q1, q2, q3, scoreTile, answered, disable)) =>
-                if(!(disable & !answered)){
-                  val questions = List(q1, q2, q3)
-                  val score: Double = scoreTile / 3
-                  questions.map(x => (answered, score, x))
-                } else {
-                  (l)
-                }
-              }            
+            val questionsList : List[(Boolean, Double, GameQuestion)] = pairQuestionWithScore(player2Board.tiles)
             (t ++ questionsList)
           } 
       }
