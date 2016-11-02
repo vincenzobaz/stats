@@ -3,7 +3,7 @@ package me.reminisce.server
 import java.util.concurrent.TimeUnit
 
 import akka.testkit.TestActorRef
-import me.reminisce.database.{DatabaseTestHelper, DatabaseTester}
+import me.reminisce.database._
 import org.json4s.JsonAST.{JObject, JString}
 import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Formats, _}
@@ -28,7 +28,7 @@ class StatsServerActorSpec extends DatabaseTester("StatsServerActorSpec") {
   val randomUser2: String = java.util.UUID.randomUUID.toString
   val urlInsert = "/insertEntity"
 
-  implicit def json4sFormats: Formats = DefaultFormats
+  implicit def json4sFormats: Formats = DefaultFormats + new QuestionSerializer
 
   case class SimpleMessageFormat(message: String)
 
