@@ -122,10 +122,11 @@ class ComputationService(database: DefaultDB) extends Actor with ActorLogging {
             }
           }
       }
-      val rivals: Set[String] = games.foldLeft[Set[String]]((Set())){
-        case (rivalsList, Game(_, player1, player2, _, _, _, _, _, _, _)) =>
-          if (player1 == userId) rivalsList + player2 else rivalsList + player1
+      val rivalsList: List[String] = games.foldLeft[List[String]]((List())){
+        case (rList, Game(_, player1, player2, _, _, _, _, _, _, _)) =>
+          if (player1 == userId) player2 :: rList else player1:: rList
       }
+      val rivals = rivalsList.groupBy(s => s).map(s => Rival(s._1, s._2.length)).toSet
 
       val allQuestionsPairedWithScore: List[(Boolean, Double, GameQuestion)] = games.foldLeft[List[(Boolean, Double, GameQuestion)]](List[(Boolean, Double, GameQuestion)]()){
         case (t, Game(_, player1, _, player1Board, player2Board, _, _, _, _, _)) =>
