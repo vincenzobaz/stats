@@ -1,6 +1,6 @@
 package me.reminisce
 
-import me.reminisce.server.GameEntities._
+import me.reminisce.stats.server.GameEntities._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.scalatest.FunSuite
