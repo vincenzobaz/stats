@@ -1,6 +1,6 @@
 package me.reminisce
 
-import me.reminisce.server.GameEntities._
+import me.reminisce.stats.server.GameEntities._
 import org.scalatest.FunSuite
 import reactivemongo.bson._
 
