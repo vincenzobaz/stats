@@ -5,7 +5,7 @@ import com.github.nscala_time.time.Imports._
 import me.reminisce.stats.server.GameEntities.QuestionKind.QuestionKind
 
 
-object Utils{
+object Utils {
   
   implicit object DatetimeReader extends BSONReader[BSONDateTime, DateTime]{
     def read(bson: BSONDateTime): DateTime = {

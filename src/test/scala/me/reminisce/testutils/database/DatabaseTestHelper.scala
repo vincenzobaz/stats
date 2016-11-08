@@ -1,7 +1,5 @@
 package me.reminisce.testutils.database
 
-import java.util.concurrent.TimeUnit
-
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods._
 import reactivemongo.api.collections.bson.BSONCollection
@@ -10,9 +8,7 @@ import reactivemongo.api.{DefaultDB, MongoConnection, MongoDriver}
 import reactivemongo.bson.{BSONDocumentWriter, BSONObjectID}
 
 import scala.collection.mutable
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 import scala.io.Source
 
 object DatabaseTestHelper {
@@ -24,18 +20,8 @@ object DatabaseTestHelper {
 
   val dbs = mutable.MutableList.empty[DefaultDB]
 
-  def registerDb(db: DefaultDB): Unit = {
-    this.synchronized {
-      dbs += db
-    }
-  }
-
   def closeConnection() = {
     this.synchronized {
-      dbs.foreach {
-        db =>
-          Await.result(db.drop(), Duration(10, TimeUnit.SECONDS))
-      }
       driver.system.terminate()
     }
   }
