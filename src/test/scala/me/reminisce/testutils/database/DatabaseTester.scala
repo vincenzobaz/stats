@@ -10,11 +10,13 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, WordSpecLike}
 import reactivemongo.api.{DefaultDB, FailoverStrategy}
 
+import scala.collection.mutable
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Random
 
-abstract class DatabaseTester(actorSystemName: String) extends TestKit(ActorSystem(actorSystemName, ConfigFactory.parseString("akka.loglevel = ERROR")))
+abstract class DatabaseTester(actorSystemName: String) extends TestKit(ActorSystem(actorSystemName, ConfigFactory.load()))
   with ImplicitSender with ScalaFutures
   with WordSpecLike with BeforeAndAfterAll with BeforeAndAfterEach {
 
@@ -22,8 +24,11 @@ abstract class DatabaseTester(actorSystemName: String) extends TestKit(ActorSyst
 
   val failoverStrategy = FailoverStrategy(initialDelay = FiniteDuration(200, TimeUnit.MILLISECONDS), retries = 10)
 
+  val dbs = mutable.MutableList.empty[DefaultDB]
+
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
+    closeDBs()
   }
 
   override def afterEach(): Unit = {
@@ -37,8 +42,19 @@ abstract class DatabaseTester(actorSystemName: String) extends TestKit(ActorSyst
 
     whenReady(connection.database(dbName, failoverStrategy = failoverStrategy)) {
       db =>
-        DatabaseTestHelper.registerDb(db)
+        registerDb(db)
         test(db)
+    }
+  }
+
+  def registerDb(db: DefaultDB): Unit = {
+    dbs += db
+  }
+
+  def closeDBs(): Unit = {
+    dbs.foreach {
+      db =>
+        Await.result(db.drop(), Duration(10, TimeUnit.SECONDS))
     }
   }
 }
