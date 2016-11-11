@@ -1,0 +1,35 @@
+language: scala
+
+scala:
+- 2.11.8
+
+jdk:
+- oraclejdk8
+
+sudo: false
+
+services: mongodb
+
+addons:
+  apt:
+    sources:
+    - mongodb-3.2-precise
+    packages:
+    - mongodb-org-server
+
+cache:
+  directories:
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt/boot/
+
+script:
+- sbt ++$TRAVIS_SCALA_VERSION -J-XX:ReservedCodeCacheSize=256M clean coverage test
+- sbt coverageReport
+- sbt coverageAggregate
+- sbt codacyCoverage
+- find $HOME/.sbt -name "*.lock" | xargs rm
+- find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
+notifications:
+  slack:
+    secure: fgBkVBU3aLZ+LrSbpuBP9vAP8qa0GhkoIEdrJaFdXTQN2RpRpuS/V8ZkgSbXaTxPHF97HTFcorMN3ciIyChgocRV/9WujGqnmbdym5VILp8n6a8uR3tQXQNJRzA+UT3/6GX4XMB2laV9zNIRxr6f7pghZB0PrT08FENJeLVIJo0=
